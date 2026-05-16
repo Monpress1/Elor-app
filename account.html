@@ -94,12 +94,18 @@
             border-radius: 12px; margin-bottom: 25px; display: flex; align-items: center;
             justify-content: center; background: rgba(0,0,0,0.5); overflow: hidden; position: relative;
         }
-        .guide-box img { width: 100%; height: 100%; object-fit: cover; display: none; animation: fadeIn 0.9s; }
-        .guide-placeholder { color: var(--text-muted); font-size: 0.85rem; text-align: center; font-style: italic; }
+       .guide-box img { 
+    width: 100%; 
+    height: 100%; 
+    object-fit: contain; /* Changed from cover to contain */
+    display: none; 
+    animation: fadeIn 0.9s; 
+}
 
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-        .btn-submit { width: 100%; padding: 16px; background: var(--accent-gold); color: #000; border: none; border-radius: 8px; font-weight: 600; text-transform: uppercase; letter-spacing: 2px; cursor: pointer; display: none; margin-top: 10px; }
+        .btn-submit { width: 100%; padding: 16px; background: var(--accent-gold); color: #000; border: none; border-radius: 8px; font-weight: 600; text-transform: uppercase; letter-spacing: 2px; cursor: pointer; transition: 0.3s; }
+        .btn-submit:not([style*="display: none"]):hover { opacity: 0.9; transform: translateY(-2px); }
 
         .glass-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 9999;
@@ -122,6 +128,11 @@
         .gm-cancel { background: transparent; border: 1px solid var(--text-muted); color: var(--text-main); flex: 1; display: none; }
         
         .export-area { background: var(--bg-deep); padding-bottom: 20px; }
+
+        /* Measurement Tabs */
+        .tab-container { display: flex; gap: 10px; margin-bottom: 20px; background: rgba(0,0,0,0.4); padding: 6px; border-radius: 10px; border: 1px solid rgba(212, 175, 55, 0.2); }
+        .tab-btn { flex: 1; padding: 12px 5px; background: transparent; color: var(--text-muted); border: none; border-radius: 6px; font-family: 'Montserrat', sans-serif; font-weight: 600; font-size: 0.7rem; cursor: pointer; transition: 0.3s; text-transform: uppercase; letter-spacing: 1px;}
+        .tab-btn.active { background: var(--accent-gold); color: #000; }
     </style>
 </head>
 <body>
@@ -176,6 +187,7 @@
         </ul>
     </div>
 
+    <!-- PROFILE VIEW -->
     <div class="sub-view" id="profile-view">
         <div class="view-header">
             <a href="javascript:void(0)" onclick="App.closeViews()"><i class="fa-solid fa-arrow-left" style="color:var(--accent-gold); font-size:1.2rem;"></i></a>
@@ -208,62 +220,134 @@
                 <label>WhatsApp Number (Optional)</label>
                 <input type="tel" class="custom-input p-input" id="p_whatsapp" disabled placeholder="+234...">
             </div>
-            <button class="btn-submit" id="btn-save-profile" onclick="App.saveProfile()">Save Profile</button>
+            <button class="btn-submit" id="btn-save-profile" style="display:none;" onclick="App.saveProfile()">Save Profile</button>
         </div>
     </div>
 
+    <!-- MEASUREMENT VIEW -->
     <div class="sub-view" id="measurement-view">
         <div class="view-header" data-html2canvas-ignore>
             <a href="javascript:void(0)" onclick="App.closeViews()"><i class="fa-solid fa-arrow-left" style="color:var(--accent-gold); font-size:1.2rem;"></i></a>
             <span class="view-title">Measurements</span>
-            <div style="display:flex; gap:10px;">
+            <div style="display:flex; gap:10px;" id="header-actions-measure">
                 <button class="action-btn" onclick="App.exportToImage()"><i class="fa-solid fa-file-export"></i></button>
                 <button class="action-btn" id="btn-edit-measure" onclick="App.toggleEditMode('measure')"><i class="fa-solid fa-pen"></i> Edit</button>
             </div>
         </div>
 
         <div class="export-area" id="export-target">
-            <div class="guide-box" data-html2canvas-ignore>
-                <p class="guide-placeholder" id="guide-text">Select a measurement to view guide</p>
-                <img id="guide-img" src="" alt="Measurement Guide">
+            
+            <!-- TABS -->
+            <div class="tab-container" data-html2canvas-ignore>
+                <button id="tab-self" class="tab-btn active" onclick="App.switchMeasureTab('self')">Self Measure</button>
+                <button id="tab-phys" class="tab-btn" onclick="App.switchMeasureTab('phys')">Request Physical Measurement</button>
             </div>
 
-            <div class="form-card">
-                <div class="measure-grid">
-                    <div class="input-group">
-                        <label>Chest (Inches)</label>
-                        <input type="number" step="0.1" class="custom-input m-input" id="m_chest" disabled onfocus="App.showGuide('chest.jpg')">
+            <!-- SELF MEASUREMENT CONTENT -->
+            <div id="self-measure-content">
+                <div class="guide-box" data-html2canvas-ignore>
+                    <p class="guide-placeholder" id="guide-text" style="display: none;">Select a measurement to view guide</p>
+                    <img id="guide-img" src="chest.jpg" alt="Measurement Guide" style="display: block;">
+                </div>
+
+                <div class="form-card">
+                    <div class="measure-grid">
+                        <div class="input-group">
+                            <label>Chest (Inches)</label>
+                            <input type="number" step="0.1" class="custom-input m-input" id="m_chest" disabled onfocus="App.showGuide('chest.jpg')">
+                        </div>
+                        <div class="input-group">
+                            <label>Neck (Inches)</label>
+                            <input type="number" step="0.1" class="custom-input m-input" id="m_neck" disabled onfocus="App.showGuide('neckc.jpg')">
+                        </div>
+                        <div class="input-group">
+                            <label>Shirt Length (Inches)</label>
+                            <input type="number" step="0.1" class="custom-input m-input" id="m_shirt_length" disabled onfocus="App.showGuide('Shirtlength.jpg')">
+                        </div>
+                        <div class="input-group">
+                            <label>Sleeve (Inches)</label>
+                            <input type="number" step="0.1" class="custom-input m-input" id="m_sleeve" disabled onfocus="App.showGuide('sleevel.jpg')">
+                        </div>
+                        <div class="input-group">
+                            <label>Trouser Length (Inches)</label>
+                            <input type="number" step="0.1" class="custom-input m-input" id="m_trouser_length" disabled onfocus="App.showGuide('trouserl.jpg')">
+                        </div>
+                        <div class="input-group">
+                            <label>Waist (Inches)</label>
+                            <input type="number" step="0.1" class="custom-input m-input" id="m_waist" disabled onfocus="App.showGuide('waist.jpg')">
+                        </div>
+                        <div class="input-group" style="grid-column: span 2;">
+                            <label>Thigh Circumference (Inches)</label>
+                            <input type="number" step="0.1" class="custom-input m-input" id="m_thigh" disabled onfocus="App.showGuide('thighcircumference.jpg')">
+                        </div>
                     </div>
-                    <div class="input-group">
-                        <label>Neck (Inches)</label>
-                        <input type="number" step="0.1" class="custom-input m-input" id="m_neck" disabled onfocus="App.showGuide('neckc.jpg')">
+                    <button class="btn-submit" id="btn-save-measure" style="display:none;" onclick="App.saveMeasurements()" data-html2canvas-ignore>Save Measurements</button>
+                </div>
+            </div>
+
+            <!-- PHYSICAL MEASUREMENT CONTENT -->
+            <div id="phys-measure-content" style="display:none;" data-html2canvas-ignore>
+                <div class="form-card" style="text-align: center; padding: 40px 20px;">
+                    <i class="fa-solid fa-tape" style="font-size: 3rem; color: var(--accent-gold); margin-bottom: 20px;"></i>
+                    <h3 style="font-family: 'Playfair Display', serif; font-size: 1.5rem; margin-bottom: 10px; color: var(--accent-gold);">Physical Measurement</h3>
+                    <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 25px; line-height: 1.6;">
+                        Prefer the masterful touch of our professional tailors? Book a physical measurement session and let our experts ensure a flawless bespoke fit.
+                    </p>
+
+                    <!-- Info Note -->
+                    <div style="background: rgba(212, 175, 55, 0.08); border-left: 3px solid var(--accent-gold); padding: 15px; text-align: left; margin-bottom: 30px; border-radius: 4px;">
+                        <i class="fa-solid fa-circle-info" style="color: var(--accent-gold); margin-right: 8px; font-size: 1.1rem; float: left; margin-top: 2px;"></i>
+                        <span style="font-size: 0.85rem; color: var(--text-main); display: block; overflow: hidden; line-height: 1.5;">
+                            <strong>Note:</strong> Once your measurements have been professionally taken by our tailors, you can return to the 'Self Measure' tab to log and save them directly on your app for all future bespoke orders.
+                        </span>
                     </div>
-                    <div class="input-group">
-                        <label>Shirt Length (Inches)</label>
-                        <input type="number" step="0.1" class="custom-input m-input" id="m_shirt_length" disabled onfocus="App.showGuide('Shirtlength.jpg')">
-                    </div>
-                    <div class="input-group">
-                        <label>Sleeve (Inches)</label>
-                        <input type="number" step="0.1" class="custom-input m-input" id="m_sleeve" disabled onfocus="App.showGuide('sleevel.jpg')">
-                    </div>
-                    <div class="input-group">
-                        <label>Trouser Length (Inches)</label>
-                        <input type="number" step="0.1" class="custom-input m-input" id="m_trouser_length" disabled onfocus="App.showGuide('trouserl.jpg')">
-                    </div>
-                    <div class="input-group">
-                        <label>Waist (Inches)</label>
-                        <input type="number" step="0.1" class="custom-input m-input" id="m_waist" disabled onfocus="App.showGuide('waist.jpg')">
-                    </div>
-                    <div class="input-group" style="grid-column: span 2;">
-                        <label>Thigh Circumference (Inches)</label>
-                        <input type="number" step="0.1" class="custom-input m-input" id="m_thigh" disabled onfocus="App.showGuide('thighcircumference.jpg')">
+
+                    <!-- Action Buttons -->
+                    <div style="display: flex; gap: 15px; justify-content: center; flex-direction: column;">
+                        <a href="tel:09057604043" class="btn-submit" style="display: block; background: transparent; border: 1px solid var(--accent-gold); color: var(--accent-gold); text-decoration: none; padding: 14px;">
+                            <i class="fa-solid fa-phone" style="margin-right: 5px;"></i> Call Tailor
+                        </a>
+                        <button class="btn-submit" style="display: block; background: #25D366; color: #fff; padding: 14px;" onclick="App.openWhatsAppForm()">
+                            <i class="fa-brands fa-whatsapp" style="font-size: 1.2rem; margin-right: 5px;"></i> Request via WhatsApp
+                        </button>
                     </div>
                 </div>
-                <button class="btn-submit" id="btn-save-measure" onclick="App.saveMeasurements()" data-html2canvas-ignore>Save Measurements</button>
             </div>
+
         </div>
     </div>
 
+    <!-- WHATSAPP BOOKING REQUEST VIEW -->
+    <div class="sub-view" id="wa-request-view">
+        <div class="view-header">
+            <a href="javascript:void(0)" onclick="App.closeViews()"><i class="fa-solid fa-arrow-left" style="color:var(--accent-gold); font-size:1.2rem;"></i></a>
+            <span class="view-title">Booking Request</span>
+            <div style="width:20px;"></div>
+        </div>
+
+        <div class="form-card">
+            <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 25px; line-height: 1.5; text-align: center;">Provide your location details to arrange a physical measurement session with our tailoring experts.</p>
+            
+            <div class="input-group">
+                <label>Client Name</label>
+                <input type="text" class="custom-input" id="wa_name" disabled>
+            </div>
+            <div class="input-group">
+                <label>State / Region</label>
+                <input type="text" class="custom-input" id="wa_state" placeholder="E.g. Lagos, Abuja, Ekiti...">
+            </div>
+            <div class="input-group">
+                <label>Full Address</label>
+                <textarea class="custom-input" id="wa_address" rows="3" placeholder="Where should the tailor meet you? Please be detailed."></textarea>
+            </div>
+            
+            <button class="btn-submit" style="display:block; margin-top:30px; background: #25D366; color: #fff;" onclick="App.submitWhatsApp()">
+                <i class="fa-solid fa-paper-plane" style="margin-right: 8px;"></i> Send to WhatsApp
+            </button>
+        </div>
+    </div>
+
+    <!-- CUSTOM ALERTS (Beautified) -->
     <div class="glass-overlay" id="glass-modal">
         <div class="glass-modal">
             <i class="fa-solid fa-gem gm-icon" id="gm-icon"></i>
@@ -278,402 +362,471 @@
 
     <script>
         const App = (function() {
- const DB_URL = 'https://lxtoxjhcdtzuxyirzxpc.supabase.co';
- const DB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx4dG94amhjZHR6dXh5aXJ6eHBjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwMDU4OTAsImV4cCI6MjA5MTU4MTg5MH0.F5lDJVYUF4aEq8DwkafoWy56I_K6ccpkXiarBJk1LAo'; 
- const client = window.supabase.createClient(DB_URL, DB_KEY);
- 
- let userSession = null;
- let isProfileEdit = false;
- let isMeasureEdit = false;
+            const DB_URL = 'https://lxtoxjhcdtzuxyirzxpc.supabase.co';
+            const DB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx4dG94amhjZHR6dXh5aXJ6eHBjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwMDU4OTAsImV4cCI6MjA5MTU4MTg5MH0.F5lDJVYUF4aEq8DwkafoWy56I_K6ccpkXiarBJk1LAo'; 
+            const client = window.supabase.createClient(DB_URL, DB_KEY);
+            
+            let userSession = null;
+            let isProfileEdit = false;
+            let isMeasureEdit = false;
 
- function updateStatusBadge(id, isComplete, overrideText = null) {
-     const el = document.getElementById(id);
-     if(el) {
-         if (overrideText) {
-             el.className = isComplete ? 'status-badge status-complete' : 'status-badge status-incomplete';
-             el.innerText = overrideText;
-         } else {
-             if(isComplete) {
-                 el.className = 'status-badge status-complete';
-                 el.innerText = 'Complete';
-             } else {
-                 el.className = 'status-badge status-incomplete';
-                 el.innerText = 'Incomplete';
-             }
-         }
-     }
- }
+            function updateStatusBadge(id, isComplete, overrideText = null) {
+                const el = document.getElementById(id);
+                if(el) {
+                    if (overrideText) {
+                        el.className = isComplete ? 'status-badge status-complete' : 'status-badge status-incomplete';
+                        el.innerText = overrideText;
+                    } else {
+                        if(isComplete) {
+                            el.className = 'status-badge status-complete';
+                            el.innerText = 'Complete';
+                        } else {
+                            el.className = 'status-badge status-incomplete';
+                            el.innerText = 'Incomplete';
+                        }
+                    }
+                }
+            }
 
- function triggerAlert(title, text, type="info", confirmCallback=null) {
-     document.getElementById('gm-title').innerText = title;
-     document.getElementById('gm-text').innerText = text;
-     
-     const icon = document.getElementById('gm-icon');
-     icon.className = type === 'warning' ? 'fa-solid fa-triangle-exclamation gm-icon' : (type === 'success' ? 'fa-solid fa-check-double gm-icon' : 'fa-solid fa-gem gm-icon');
-     icon.style.color = type === 'warning' ? 'var(--danger)' : 'var(--accent-gold)';
+            function triggerAlert(title, text, type="info", confirmCallback=null) {
+                document.getElementById('gm-title').innerText = title;
+                document.getElementById('gm-text').innerText = text;
+                
+                const icon = document.getElementById('gm-icon');
+                icon.className = type === 'warning' ? 'fa-solid fa-triangle-exclamation gm-icon' : (type === 'success' ? 'fa-solid fa-check-double gm-icon' : 'fa-solid fa-gem gm-icon');
+                icon.style.color = type === 'warning' ? 'var(--danger)' : 'var(--accent-gold)';
 
-     const modal = document.getElementById('glass-modal');
-     const btnCancel = document.getElementById('gm-cancel');
-     const btnConfirm = document.getElementById('gm-confirm');
+                const modal = document.getElementById('glass-modal');
+                const btnCancel = document.getElementById('gm-cancel');
+                const btnConfirm = document.getElementById('gm-confirm');
 
-     if (confirmCallback) {
-         btnCancel.style.display = 'block';
-         btnConfirm.innerText = 'Confirm';
-         btnConfirm.onclick = () => { modal.classList.remove('active'); confirmCallback(); };
-     } else {
-         btnCancel.style.display = 'none';
-         btnConfirm.innerText = 'Understood';
-         btnConfirm.onclick = () => { modal.classList.remove('active'); };
-     }
-     
-     btnCancel.onclick = () => modal.classList.remove('active');
-     modal.classList.add('active');
- }
+                if (confirmCallback) {
+                    btnCancel.style.display = 'block';
+                    btnConfirm.innerText = 'Confirm';
+                    btnConfirm.onclick = () => { modal.classList.remove('active'); confirmCallback(); };
+                } else {
+                    btnCancel.style.display = 'none';
+                    btnConfirm.innerText = 'Understood';
+                    btnConfirm.onclick = () => { modal.classList.remove('active'); };
+                }
+                
+                btnCancel.onclick = () => modal.classList.remove('active');
+                modal.classList.add('active');
+            }
 
- return {
-     async init() {
-         const { data: { session } } = await client.auth.getSession();
-         if (!session) {
-             window.location.href = 'auth.html';
-             return;
-         }
-         userSession = session;
-         
-         const meta = session.user.user_metadata || {};
-         const firstName = meta.first_name || 'Mogul';
-         const lastName = meta.last_name || '';
-         
-         document.getElementById('userName').innerText = `${firstName} ${lastName}`.trim();
-         document.getElementById('p_firstName').value = firstName;
-         document.getElementById('p_lastName').value = lastName;
+            return {
+                async init() {
+                    const { data: { session } } = await client.auth.getSession();
+                    if (!session) {
+                        window.location.href = 'auth.html';
+                        return;
+                    }
+                    userSession = session;
+                    
+                    const meta = session.user.user_metadata || {};
+                    const firstName = meta.first_name || 'Mogul';
+                    const lastName = meta.last_name || '';
+                    
+                    document.getElementById('userName').innerText = `${firstName} ${lastName}`.trim();
+                    document.getElementById('p_firstName').value = firstName;
+                    document.getElementById('p_lastName').value = lastName;
 
-         await this.loadData();
-         await this.checkNotificationStatus();
-     },
+                    await this.loadData();
+                    await this.checkNotificationStatus();
+                },
 
-     async loadData() {
-         const { data } = await client.from('profiles').select('*').eq('id', userSession.user.id).single();
-         if (data) {
-             document.getElementById('p_delivery').value = data.shipping_address || '';
-             document.getElementById('p_residential').value = data.residential_address || '';
-             document.getElementById('p_phone').value = data.phone || '';
-             document.getElementById('p_whatsapp').value = data.whatsapp_number || '';
+                async loadData() {
+                    const { data } = await client.from('profiles').select('*').eq('id', userSession.user.id).single();
+                    if (data) {
+                        document.getElementById('p_delivery').value = data.shipping_address || '';
+                        document.getElementById('p_residential').value = data.residential_address || '';
+                        document.getElementById('p_phone').value = data.phone || '';
+                        document.getElementById('p_whatsapp').value = data.whatsapp_number || '';
 
-             const pComplete = !!(data.shipping_address && data.residential_address && data.phone);
-             updateStatusBadge('badge-profile', pComplete);
+                        const pComplete = !!(data.shipping_address && data.residential_address && data.phone);
+                        updateStatusBadge('badge-profile', pComplete);
 
-             const m = data.measurements || {};
-             document.getElementById('m_chest').value = m.chest || '';
-             document.getElementById('m_neck').value = m.neck || '';
-             document.getElementById('m_shirt_length').value = m.shirt_length || '';
-             document.getElementById('m_sleeve').value = m.sleeve || '';
-             document.getElementById('m_trouser_length').value = m.trouser_length || '';
-             document.getElementById('m_waist').value = m.waist || '';
-             document.getElementById('m_thigh').value = m.thigh || '';
+                        const m = data.measurements || {};
+                        document.getElementById('m_chest').value = m.chest || '';
+                        document.getElementById('m_neck').value = m.neck || '';
+                        document.getElementById('m_shirt_length').value = m.shirt_length || '';
+                        document.getElementById('m_sleeve').value = m.sleeve || '';
+                        document.getElementById('m_trouser_length').value = m.trouser_length || '';
+                        document.getElementById('m_waist').value = m.waist || '';
+                        document.getElementById('m_thigh').value = m.thigh || '';
 
-             const mComplete = !!(m.chest && m.neck && m.shirt_length && m.sleeve && m.trouser_length && m.waist && m.thigh_circumference);
-             updateStatusBadge('badge-measurements', mComplete);
-         } else {
-             updateStatusBadge('badge-profile', false);
-             updateStatusBadge('badge-measurements', false);
-         }
-     },
+                        const mComplete = !!(m.chest && m.neck && m.shirt_length && m.sleeve && m.trouser_length && m.waist && m.thigh_circumference);
+                        updateStatusBadge('badge-measurements', mComplete);
+                    } else {
+                        updateStatusBadge('badge-profile', false);
+                        updateStatusBadge('badge-measurements', false);
+                    }
+                },
 
-     openView(id) {
-         document.getElementById(id).style.display = 'block';
-         window.scrollTo(0, 0);
-     },
+                openView(id) {
+                    document.getElementById(id).style.display = 'block';
+                    window.scrollTo(0, 0);
+                    
+                    // Automate Edit Mode & Image display for Measurements on load
+                    if (id === 'measurement-view') {
+                        if (!isMeasureEdit) {
+                            this.toggleEditMode('measure');
+                        }
+                        this.showGuide('chest.jpg');
+                    }
+                },
 
-     closeViews() {
-         document.querySelectorAll('.sub-view').forEach(v => v.style.display = 'none');
-         if(isProfileEdit) this.toggleEditMode('profile');
-         if(isMeasureEdit) this.toggleEditMode('measure');
-         this.loadData();
-     },
+                closeViews() {
+                    document.querySelectorAll('.sub-view').forEach(v => v.style.display = 'none');
+                    if(isProfileEdit) this.toggleEditMode('profile');
+                    if(isMeasureEdit) this.toggleEditMode('measure');
+                    this.loadData();
+                },
 
-     toggleEditMode(type) {
-         if(type === 'profile') {
-             isProfileEdit = !isProfileEdit;
-             const inputs = document.querySelectorAll('.p-input');
-             inputs.forEach(input => {
-                 if(input.id !== 'p_firstName' && input.id !== 'p_lastName') {
-                     input.disabled = !isProfileEdit;
-                 }
-             });
-             document.getElementById('btn-save-profile').style.display = isProfileEdit ? 'block' : 'none';
-             document.getElementById('btn-edit-profile').innerHTML = isProfileEdit ? '<i class="fa-solid fa-xmark"></i> Cancel' : '<i class="fa-solid fa-pen"></i> Edit';
-         } else {
-             isMeasureEdit = !isMeasureEdit;
-             document.querySelectorAll('.m-input').forEach(i => i.disabled = !isMeasureEdit);
-             document.getElementById('btn-save-measure').style.display = isMeasureEdit ? 'block' : 'none';
-             document.getElementById('btn-edit-measure').innerHTML = isMeasureEdit ? '<i class="fa-solid fa-xmark"></i> Cancel' : '<i class="fa-solid fa-pen"></i> Edit';
-             
-             if(!isMeasureEdit) {
-                 document.getElementById('guide-img').style.display = 'none';
-                 document.getElementById('guide-text').style.display = 'block';
-             }
-         }
-     },
+                // TAB SWITCHING LOGIC FOR MEASUREMENTS
+                switchMeasureTab(tab) {
+                    const btnSelf = document.getElementById('tab-self');
+                    const btnPhys = document.getElementById('tab-phys');
+                    const contentSelf = document.getElementById('self-measure-content');
+                    const contentPhys = document.getElementById('phys-measure-content');
+                    const headerActions = document.getElementById('header-actions-measure');
 
-     showGuide(imgSrc) {
-         if(!isMeasureEdit) return; 
-         document.getElementById('guide-text').style.display = 'none';
-         const img = document.getElementById('guide-img');
-         img.src = imgSrc;
-         img.style.display = 'block';
-     },
+                    if (tab === 'self') {
+                        btnSelf.classList.add('active');
+                        btnPhys.classList.remove('active');
+                        contentSelf.style.display = 'block';
+                        contentPhys.style.display = 'none';
+                        headerActions.style.display = 'flex'; // Show Edit/Export buttons
+                    } else {
+                        btnPhys.classList.add('active');
+                        btnSelf.classList.remove('active');
+                        contentPhys.style.display = 'block';
+                        contentSelf.style.display = 'none';
+                        headerActions.style.display = 'none'; // Hide Edit/Export buttons for Physical section
+                        
+                        // Close edit mode if it was open on Self Measure
+                        if(isMeasureEdit) this.toggleEditMode('measure');
+                    }
+                },
 
-     async saveProfile() {
-         const payload = {
-             id: userSession.user.id,
-             shipping_address: document.getElementById('p_delivery').value,
-             residential_address: document.getElementById('p_residential').value,
-             phone: document.getElementById('p_phone').value,
-             whatsapp_number: document.getElementById('p_whatsapp').value,
-         };
+                // WHATSAPP REDIRECTION LOGIC
+                openWhatsAppForm() {
+                    // Pre-fill user name into the whatsapp form
+                    const fullName = document.getElementById('userName').innerText;
+                    document.getElementById('wa_name').value = fullName;
+                    // Open the sub-view
+                    this.openView('wa-request-view');
+                },
 
-         const { error } = await client.from('profiles').upsert(payload);
-         if (error) {
-             triggerAlert("Update Failed", error.message, "warning");
-         } else {
-             triggerAlert("Profile Secured", "Your shipping and contact details have been elegantly updated.", "success");
-             this.toggleEditMode('profile');
-         }
-     },
+                submitWhatsApp() {
+                    const name = document.getElementById('wa_name').value;
+                    const state = document.getElementById('wa_state').value;
+                    const address = document.getElementById('wa_address').value;
 
-     async saveMeasurements() {
-         const { data: existing } = await client.from('profiles').select('*').eq('id', userSession.user.id).single();
-         
-         const payload = {
-             id: userSession.user.id,
-             measurements: {
-                 ...(existing?.measurements || {}),
-                 chest: document.getElementById('m_chest').value,
-                 neck: document.getElementById('m_neck').value,
-                 shirt_length: document.getElementById('m_shirt_length').value,
-                 sleeve: document.getElementById('m_sleeve').value,
-                 trouser_length: document.getElementById('m_trouser_length').value,
-                 waist: document.getElementById('m_waist').value,
-                 thigh_circumference: document.getElementById('m_thigh').value,
-             }
-         };
+                    if (!state || !address) {
+                        triggerAlert("Missing Information", "Please enter your State and Address so our tailors know where to meet you.", "warning");
+                        return;
+                    }
 
-         const { error } = await client.from('profiles').upsert(payload);
-         if (error) {
-             triggerAlert("Update Failed", error.message, "warning");
-         } else {
-             triggerAlert("Measurements Secured", "Your bespoke blueprint has been recorded successfully.", "success");
-             this.toggleEditMode('measure');
-         }
-     },
+                    // Format text payload as requested
+                    const textPayload = `Name: ${name}\nPurpose: Booking a Physical Measurement\nState: ${state}\nAddress: ${address}`;
+                    
+                    // Encode for URL and Redirect
+                    const encodedText = encodeURIComponent(textPayload);
+                    const tailorsNumber = "2349057604043"; // International format for 09057604043
+                    
+                    window.open(`https://wa.me/${tailorsNumber}?text=${encodedText}`, '_blank');
+                },
 
-     exportToImage() {
-         const target = document.getElementById('export-target');
-         const wasEditing = isMeasureEdit;
-         if(wasEditing) this.toggleEditMode('measure');
+                toggleEditMode(type) {
+                    if(type === 'profile') {
+                        isProfileEdit = !isProfileEdit;
+                        const inputs = document.querySelectorAll('.p-input');
+                        inputs.forEach(input => {
+                            if(input.id !== 'p_firstName' && input.id !== 'p_lastName') {
+                                input.disabled = !isProfileEdit;
+                            }
+                        });
+                        document.getElementById('btn-save-profile').style.display = isProfileEdit ? 'block' : 'none';
+                        document.getElementById('btn-edit-profile').innerHTML = isProfileEdit ? '<i class="fa-solid fa-xmark"></i> Cancel' : '<i class="fa-solid fa-pen"></i> Edit';
+                    } else {
+                        isMeasureEdit = !isMeasureEdit;
+                        document.querySelectorAll('.m-input').forEach(i => i.disabled = !isMeasureEdit);
+                        document.getElementById('btn-save-measure').style.display = isMeasureEdit ? 'block' : 'none';
+                        document.getElementById('btn-edit-measure').innerHTML = isMeasureEdit ? '<i class="fa-solid fa-xmark"></i> Cancel' : '<i class="fa-solid fa-pen"></i> Edit';
+                        
+                        if(!isMeasureEdit) {
+                            document.getElementById('guide-img').style.display = 'none';
+                            document.getElementById('guide-text').style.display = 'block';
+                        }
+                    }
+                },
 
-         html2canvas(target, { backgroundColor: '#050505', scale: 2 }).then(canvas => {
-             const link = document.createElement('a');
-             link.download = `ELOR_Measurements_${document.getElementById('p_firstName').value}.png`;
-             link.href = canvas.toDataURL('image/png');
-             link.click();
-             
-             triggerAlert("Export Complete", "Your measurement dossier has been saved to your device.", "success");
-             if(wasEditing) this.toggleEditMode('measure');
-         });
-     },
+                showGuide(imgSrc) {
+                    if(!isMeasureEdit) return; 
+                    document.getElementById('guide-text').style.display = 'none';
+                    const img = document.getElementById('guide-img');
+                    img.src = imgSrc;
+                    img.style.display = 'block';
+                },
 
-     confirmLogout() {
-         triggerAlert("Departing?", "Are you sure you wish to log out of your atelier account?", "warning", async () => {
-             await client.auth.signOut();
-             window.location.href = 'index.html';
-         });
-     },
+                async saveProfile() {
+                    const payload = {
+                        id: userSession.user.id,
+                        shipping_address: document.getElementById('p_delivery').value,
+                        residential_address: document.getElementById('p_residential').value,
+                        phone: document.getElementById('p_phone').value,
+                        whatsapp_number: document.getElementById('p_whatsapp').value,
+                    };
 
-     confirmDelete() {
-         triggerAlert("Severe Action", "Are you entirely sure you want to permanently delete your ELOR account and all bespoke records? This cannot be undone.", "warning", async () => {
-             triggerAlert("Request Sent", "Your account deletion request has been forwarded to the atelier masters. You will be logged out.", "info", async () => {
-                 await client.auth.signOut();
-                 window.location.href = 'index.html';
-             });
-         });
-     },
+                    const { error } = await client.from('profiles').upsert(payload);
+                    if (error) {
+                        triggerAlert("Update Failed", error.message, "warning");
+                    } else {
+                        triggerAlert("Profile Secured", "Your shipping and contact details have been elegantly updated.", "success");
+                        this.toggleEditMode('profile');
+                    }
+                },
 
-     async checkNotificationStatus() {
-         if (!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) {
-             updateStatusBadge('badge-notifications', false, 'Unsupported');
-             return;
-         }
+                async saveMeasurements() {
+                    const { data: existing } = await client.from('profiles').select('*').eq('id', userSession.user.id).single();
+                    
+                    const payload = {
+                        id: userSession.user.id,
+                        measurements: {
+                            ...(existing?.measurements || {}),
+                            chest: document.getElementById('m_chest').value,
+                            neck: document.getElementById('m_neck').value,
+                            shirt_length: document.getElementById('m_shirt_length').value,
+                            sleeve: document.getElementById('m_sleeve').value,
+                            trouser_length: document.getElementById('m_trouser_length').value,
+                            waist: document.getElementById('m_waist').value,
+                            thigh_circumference: document.getElementById('m_thigh').value,
+                        }
+                    };
 
-         if (Notification.permission === 'granted') {
-             try {
-                 const registrations = await navigator.serviceWorker.getRegistrations();
-                 if (registrations.length > 0 && registrations[0].pushManager) {
-                     const subscription = await registrations[0].pushManager.getSubscription();
-                     if (subscription) {
-                         updateStatusBadge('badge-notifications', true, 'Enabled');
-                         return;
-                     }
-                 }
-             } catch(e) {}
-         } 
-         updateStatusBadge('badge-notifications', false, 'Disabled');
-     },
+                    const { error } = await client.from('profiles').upsert(payload);
+                    if (error) {
+                        triggerAlert("Update Failed", error.message, "warning");
+                    } else {
+                        triggerAlert("Measurements Secured", "Your bespoke blueprint has been recorded successfully.", "success");
+                        this.toggleEditMode('measure');
+                    }
+                },
 
-     async togglePushNotifications() {
-         let traceLog = ["🔍 --- PWA MOBILE TRACE START ---"];
-         
-         try {
-             traceLog.push(`1. User Session Active: ${!!userSession}`);
-             traceLog.push(`2. SW in navigator: ${'serviceWorker' in navigator}`);
-             traceLog.push(`3. PushManager in window: ${'PushManager' in window}`);
-             traceLog.push(`4. Notification in window: ${'Notification' in window}`);
-             traceLog.push(`5. Initial Permissions State: ${Notification.permission}`);
+                exportToImage() {
+                    const target = document.getElementById('export-target');
+                    const wasEditing = isMeasureEdit;
+                    if(wasEditing) this.toggleEditMode('measure');
 
-             if (!('Notification' in window) || !('serviceWorker' in navigator)) {
-                 traceLog.push("❌ CRITICAL: Engine components missing from browser window context.");
-                 alert(traceLog.join("\n"));
-                 return;
-             }
+                    html2canvas(target, { backgroundColor: '#050505', scale: 2 }).then(canvas => {
+                        const link = document.createElement('a');
+                        link.download = `ELOR_Measurements_${document.getElementById('p_firstName').value}.png`;
+                        link.href = canvas.toDataURL('image/png');
+                        link.click();
+                        
+                        triggerAlert("Export Complete", "Your measurement dossier has been saved to your device.", "success");
+                        if(wasEditing) this.toggleEditMode('measure');
+                    });
+                },
 
-             // Scan structural configuration registrations
-             let activeRegs = await navigator.serviceWorker.getRegistrations();
-             traceLog.push(`6. Registrations Count: ${activeRegs.length}`);
+                confirmLogout() {
+                    triggerAlert("Departing?", "Are you sure you wish to log out of your atelier account?", "warning", async () => {
+                        await client.auth.signOut();
+                        window.location.href = 'index.html';
+                    });
+                },
 
-             // SELF-HEALING EMERGENCY INJECTION
-             if (activeRegs.length === 0) {
-                 traceLog.push("⚠️ Warning: 0 registrations found. Triggering on-the-fly emergency registration...");
-                 const emergencyReg = await navigator.serviceWorker.register('/sw.js');
-                 traceLog.push(`✅ Emergency registration queued! Scope: ${emergencyReg.scope}`);
-                 // Give the browser a brief moment to map the instance
-                 await new Promise(r => setTimeout(r, 1200));
-                 activeRegs = [emergencyReg];
-             }
+                confirmDelete() {
+                    triggerAlert("Severe Action", "Are you entirely sure you want to permanently delete your ELOR account and all bespoke records? This cannot be undone.", "warning", async () => {
+                        triggerAlert("Request Sent", "Your account deletion request has been forwarded to the atelier masters. You will be logged out.", "info", async () => {
+                            await client.auth.signOut();
+                            window.location.href = 'index.html';
+                        });
+                    });
+                },
 
-             activeRegs.forEach((r, idx) => {
-                 traceLog.push(`   [Reg ${idx}]: scope=${r.scope}, active=${!!r.active}, installing=${!!r.installing}, waiting=${!!r.waiting}`);
-             });
+                async checkNotificationStatus() {
+                    if (!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) {
+                        updateStatusBadge('badge-notifications', false, 'Unsupported');
+                        return;
+                    }
 
-             if (Notification.permission === 'default') {
-                 traceLog.push("7. Requesting Notification Permissions natively...");
-                 const permission = await Notification.requestPermission();
-                 traceLog.push(`   -> Result: ${permission}`);
-                 if (permission !== 'granted') {
-                     alert(traceLog.join("\n") + "\n❌ Native privilege token declined.");
-                     this.checkNotificationStatus();
-                     return;
-                 }
-             } else if (Notification.permission === 'denied') {
-                 alert(traceLog.join("\n") + "\n❌ Absolute block found inside internal browser configuration.");
-                 return;
-             }
+                    if (Notification.permission === 'granted') {
+                        try {
+                            const registrations = await navigator.serviceWorker.getRegistrations();
+                            if (registrations.length > 0 && registrations[0].pushManager) {
+                                const subscription = await registrations[0].pushManager.getSubscription();
+                                if (subscription) {
+                                    updateStatusBadge('badge-notifications', true, 'Enabled');
+                                    return;
+                                }
+                            }
+                        } catch(e) {}
+                    } 
+                    updateStatusBadge('badge-notifications', false, 'Disabled');
+                },
 
-             traceLog.push("8. Instigating navigator.serviceWorker.ready race condition...");
-             
-             const readyPromise = navigator.serviceWorker.ready;
-             const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("SW Ready state tracking exceeded 12 second maximum limit.")), 12000));
-             
-             const registration = await Promise.race([readyPromise, timeoutPromise]);
-             traceLog.push("9. ServiceWorker.ready resolved successfully.");
-             traceLog.push(`10. pushManager defined inside worker: ${!!registration.pushManager}`);
+                // LOGIC UNTOUCHED: Only output alerts changed to beautiful UI.
+                async togglePushNotifications() {
+                    let traceLog = ["🔍 --- PWA MOBILE TRACE START ---"];
+                    
+                    try {
+                        traceLog.push(`1. User Session Active: ${!!userSession}`);
+                        traceLog.push(`2. SW in navigator: ${'serviceWorker' in navigator}`);
+                        traceLog.push(`3. PushManager in window: ${'PushManager' in window}`);
+                        traceLog.push(`4. Notification in window: ${'Notification' in window}`);
+                        traceLog.push(`5. Initial Permissions State: ${Notification.permission}`);
 
-             if (!registration || !registration.pushManager) {
-                 alert(traceLog.join("\n") + "\n❌ pushManager instance missing or inaccessible inside container root.");
-                 return;
-             }
+                        if (!('Notification' in window) || !('serviceWorker' in navigator)) {
+                            traceLog.push("❌ CRITICAL: Engine components missing from browser window context.");
+                            console.warn(traceLog.join("\n"));
+                            triggerAlert("Unsupported", "Push notifications are not supported on this device/browser.", "warning");
+                            return;
+                        }
 
-             traceLog.push("11. Querying background manager subscription instances...");
-             const existingSubscription = await registration.pushManager.getSubscription();
-             traceLog.push(`12. Existing active registration found: ${!!existingSubscription}`);
+                        // Scan structural configuration registrations
+                        let activeRegs = await navigator.serviceWorker.getRegistrations();
+                        traceLog.push(`6. Registrations Count: ${activeRegs.length}`);
 
-             if (existingSubscription) {
-                 traceLog.push("13. Proceeding to tear down active registration logic...");
-                 await existingSubscription.unsubscribe();
-                 traceLog.push("14. Subscription object unlinked cleanly from endpoint.");
-                 
-                 const { error: delErr } = await client
-                     .from('push_subscriptions')
-                     .delete()
-                     .eq('user_id', userSession.user.id)
-                     .like('subscription_json->>endpoint', existingSubscription.endpoint);
+                        // SELF-HEALING EMERGENCY INJECTION
+                        if (activeRegs.length === 0) {
+                            traceLog.push("⚠️ Warning: 0 registrations found. Triggering on-the-fly emergency registration...");
+                            const emergencyReg = await navigator.serviceWorker.register('/sw.js');
+                            traceLog.push(`✅ Emergency registration queued! Scope: ${emergencyReg.scope}`);
+                            // Give the browser a brief moment to map the instance
+                            await new Promise(r => setTimeout(r, 1200));
+                            activeRegs = [emergencyReg];
+                        }
 
-                 if(delErr) traceLog.push(`⚠️ Supabase removal warning: ${delErr.message}`);
-                 else traceLog.push("15. DB storage vector synchronized successfully.");
+                        activeRegs.forEach((r, idx) => {
+                            traceLog.push(`   [Reg ${idx}]: scope=${r.scope}, active=${!!r.active}, installing=${!!r.installing}, waiting=${!!r.waiting}`);
+                        });
 
-                 this.checkNotificationStatus();
-                 alert(traceLog.join("\n") + "\n✅ Background push channels terminated cleanly.");
-             } else {
-                 traceLog.push("13. Compiling VAPID key payload mapping sequence...");
-                 const VAPID_PUBLIC_KEY = 'BAkq_2ZCp335lLLytu54Wsv7RDDhHYgz21DMHQ1Np-6RKR-VcpzxNaJ4HNGUKT25jNf6J_T9s1hh8mUGWTBXax8';
-                 const convertedKey = this.urlBase64ToUint8Array(VAPID_PUBLIC_KEY);
-                 traceLog.push("14. Binary array conversion execution complete.");
+                        if (Notification.permission === 'default') {
+                            traceLog.push("7. Requesting Notification Permissions natively...");
+                            const permission = await Notification.requestPermission();
+                            traceLog.push(`   -> Result: ${permission}`);
+                            if (permission !== 'granted') {
+                                console.warn(traceLog.join("\n") + "\n❌ Native privilege token declined.");
+                                triggerAlert("Permission Denied", "Native notifications permission was declined.", "warning");
+                                this.checkNotificationStatus();
+                                return;
+                            }
+                        } else if (Notification.permission === 'denied') {
+                            console.warn(traceLog.join("\n") + "\n❌ Absolute block found inside internal browser configuration.");
+                            triggerAlert("Blocked", "Notifications are blocked in your browser settings. Please enable them.", "warning");
+                            return;
+                        }
 
-                 traceLog.push("15. Spawning pushManager subscribe payload network process...");
-                 const newSubscription = await registration.pushManager.subscribe({
-                     userVisibleOnly: true,
-                     applicationServerKey: convertedKey
-                 });
-                 traceLog.push("16. Cryptographic device handshake achieved successfully.");
+                        traceLog.push("8. Instigating navigator.serviceWorker.ready race condition...");
+                        
+                        const readyPromise = navigator.serviceWorker.ready;
+                        const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("SW Ready state tracking exceeded 12 second maximum limit.")), 12000));
+                        
+                        const registration = await Promise.race([readyPromise, timeoutPromise]);
+                        traceLog.push("9. ServiceWorker.ready resolved successfully.");
+                        traceLog.push(`10. pushManager defined inside worker: ${!!registration.pushManager}`);
 
-                 const { error: insErr } = await client
-                     .from('push_subscriptions')
-                     .insert({
-                         user_id: userSession.user.id,
-                         subscription_json: newSubscription
-                     });
+                        if (!registration || !registration.pushManager) {
+                            console.warn(traceLog.join("\n") + "\n❌ pushManager instance missing or inaccessible inside container root.");
+                            triggerAlert("System Error", "Push manager is inaccessible. Check console logs.", "warning");
+                            return;
+                        }
 
-                 if(insErr) {
-                     traceLog.push(`❌ Supabase Sync Failure: ${insErr.message}`);
-                     alert(traceLog.join("\n"));
-                     return;
-                 }
-                 traceLog.push("17. Handshake records written to core cloud architecture.");
+                        traceLog.push("11. Querying background manager subscription instances...");
+                        const existingSubscription = await registration.pushManager.getSubscription();
+                        traceLog.push(`12. Existing active registration found: ${!!existingSubscription}`);
 
-                 this.checkNotificationStatus();
-                 alert(traceLog.join("\n") + "\n✅ Complete mobile registration pipe completely operational!");
-             }
-         } catch (err) {
-             traceLog.push(`\n💥 FATAL CRASH INTERCEPTED: ${err.name} - ${err.message}`);
-             if(err.stack) traceLog.push(`Stack: ${err.stack.toString().substring(0, 300)}`);
-             alert(traceLog.join("\n"));
-         }
-     },
+                        if (existingSubscription) {
+                            traceLog.push("13. Proceeding to tear down active registration logic...");
+                            await existingSubscription.unsubscribe();
+                            traceLog.push("14. Subscription object unlinked cleanly from endpoint.");
+                            
+                            const { error: delErr } = await client
+                                .from('push_subscriptions')
+                                .delete()
+                                .eq('user_id', userSession.user.id)
+                                .like('subscription_json->>endpoint', existingSubscription.endpoint);
 
-     urlBase64ToUint8Array(base64String) {
-         const padding = '='.repeat((4 - base64String.length % 4) % 4);
-         const base64 = (base64String + padding).replace(/\-/g, '+').replace(/_/g, '/');
-         const rawData = window.atob(base64);
-         const outputArray = new Uint8Array(rawData.length);
-         for (let i = 0; i < rawData.length; ++i) {
-             outputArray[i] = rawData.charCodeAt(i);
-         }
-         return outputArray;
-     }
- };
-})();
+                            if(delErr) traceLog.push(`⚠️ Supabase removal warning: ${delErr.message}`);
+                            else traceLog.push("15. DB storage vector synchronized successfully.");
 
-document.addEventListener('DOMContentLoaded', () => App.init());
+                            this.checkNotificationStatus();
+                            console.log(traceLog.join("\n") + "\n✅ Background push channels terminated cleanly.");
+                            triggerAlert("Notifications Disabled", "You will no longer receive push alerts on this device.", "success");
+                        } else {
+                            traceLog.push("13. Compiling VAPID key payload mapping sequence...");
+                            const VAPID_PUBLIC_KEY = 'BAkq_2ZCp335lLLytu54Wsv7RDDhHYgz21DMHQ1Np-6RKR-VcpzxNaJ4HNGUKT25jNf6J_T9s1hh8mUGWTBXax8';
+                            const convertedKey = this.urlBase64ToUint8Array(VAPID_PUBLIC_KEY);
+                            traceLog.push("14. Binary array conversion execution complete.");
 
-// BULLETPROOF REGISTRATION WRAPPER
-if ('serviceWorker' in navigator) {
- const triggerRegistration = () => {
-     navigator.serviceWorker.register('/sw.js')
-       .then(reg => {
-           console.log('SW successfully activated scope:', reg.scope);
-           reg.update(); 
-       })
-       .catch(err => alert('🔴 CRITICAL SW REGISTRATION SCRIPT REJECTION:\n' + err.message));
- };
+                            traceLog.push("15. Spawning pushManager subscribe payload network process...");
+                            const newSubscription = await registration.pushManager.subscribe({
+                                userVisibleOnly: true,
+                                applicationServerKey: convertedKey
+                            });
+                            traceLog.push("16. Cryptographic device handshake achieved successfully.");
 
- // If page is already fully loaded, register immediately. Do not wait for an event that already passed.
- if (document.readyState === 'complete' || document.readyState === 'interactive') {
-     triggerRegistration();
- } else {
-     window.addEventListener('load', triggerRegistration);
- }
-}
+                            const { error: insErr } = await client
+                                .from('push_subscriptions')
+                                .insert({
+                                    user_id: userSession.user.id,
+                                    subscription_json: newSubscription
+                                });
 
+                            if(insErr) {
+                                traceLog.push(`❌ Supabase Sync Failure: ${insErr.message}`);
+                                console.error(traceLog.join("\n"));
+                                triggerAlert("Sync Failure", "Failed to register notifications securely on our end.", "warning");
+                                return;
+                            }
+                            traceLog.push("17. Handshake records written to core cloud architecture.");
+
+                            this.checkNotificationStatus();
+                            console.log(traceLog.join("\n") + "\n✅ Complete mobile registration pipe completely operational!");
+                            triggerAlert("Notifications Enabled", "You are now registered to receive instant bespoke updates.", "success");
+                        }
+                    } catch (err) {
+                        traceLog.push(`\n💥 FATAL CRASH INTERCEPTED: ${err.name} - ${err.message}`);
+                        if(err.stack) traceLog.push(`Stack: ${err.stack.toString().substring(0, 300)}`);
+                        console.error(traceLog.join("\n"));
+                        triggerAlert("System Crash", "An internal error occurred during setup. See console for details.", "warning");
+                    }
+                },
+
+                urlBase64ToUint8Array(base64String) {
+                    const padding = '='.repeat((4 - base64String.length % 4) % 4);
+                    const base64 = (base64String + padding).replace(/\-/g, '+').replace(/_/g, '/');
+                    const rawData = window.atob(base64);
+                    const outputArray = new Uint8Array(rawData.length);
+                    for (let i = 0; i < rawData.length; ++i) {
+                        outputArray[i] = rawData.charCodeAt(i);
+                    }
+                    return outputArray;
+                }
+            };
+        })();
+
+        document.addEventListener('DOMContentLoaded', () => App.init());
+
+        // BULLETPROOF REGISTRATION WRAPPER
+        if ('serviceWorker' in navigator) {
+            const triggerRegistration = () => {
+                navigator.serviceWorker.register('/sw.js')
+                .then(reg => {
+                    console.log('SW successfully activated scope:', reg.scope);
+                    reg.update(); 
+                })
+                .catch(err => console.error('🔴 CRITICAL SW REGISTRATION SCRIPT REJECTION:\n' + err.message));
+            };
+
+            if (document.readyState === 'complete' || document.readyState === 'interactive') {
+                triggerRegistration();
+            } else {
+                window.addEventListener('load', triggerRegistration);
+            }
+        }
     </script>
 </body>
 </html>
-
