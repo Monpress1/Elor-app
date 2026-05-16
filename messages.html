@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ELOR ADMIN | Support Center</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600&family=Playfair+Display:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <style>
+        :root {
+            --bg-sidebar: #0f0f0f;
+            --bg-main: #050505;
+            --bg-chat: #111111;
+            --gold: #C5A059;
+            --gold-light: rgba(197, 160, 89, 0.2);
+            --text: #F8F8FF;
+            --text-muted: #888888;
+            --border: rgba(197, 160, 89, 0.15);
+            --danger: #ff4c4c;
+            --font-serif: 'Playfair Display', serif;
+            --font-sans: 'Montserrat', sans-serif;
+        }
+
+        * { margin:0; padding:0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        
+        body { 
+            background: var(--bg-main); 
+            color: var(--text); 
+            font-family: var(--font-sans); 
+            display: flex; 
+            height: 100vh; 
+            width: 100vw;
+            overflow: hidden; 
+        }
+
+        /* --- SIDEBAR NAVIGATION --- */
+        .sidebar {
+            width: 380px;
+            background: var(--bg-sidebar);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            z-index: 100;
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .sidebar-header {
+            padding: 30px 25px;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .back-link {
+            color: var(--gold);
+            text-decoration: none;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 15px;
+            opacity: 0.8;
+            transition: 0.3s;
+        }
+        .back-link:hover { opacity: 1; }
+
+        .sidebar-title-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .sidebar-title-row h2 { 
+            font-family: var(--font-serif); 
+            color: var(--gold); 
+            font-size: 1.4rem; 
+            letter-spacing: 1px; 
+        }
+
+        .refresh-btn {
+            background: none;
+            border: none;
+            color: var(--gold);
+            cursor: pointer;
+            font-size: 1.1rem;
+            transition: transform 0.5s ease;
+        }
+        .refresh-btn:active { transform: rotate(180deg); }
+
+        /* --- THREAD LIST --- */
+        .thread-list {
+            flex: 1;
+            overflow-y: auto;
+            scrollbar-width: thin;
+            scrollbar-color: var(--gold) transparent;
+        }
+        .thread-list::-webkit-scrollbar { width: 4px; }
+        .thread-list::-webkit-scrollbar-thumb { background: var(--gold); }
+
+        .thread-item {
+            padding: 20px 25px;
+            border-bottom: 1px solid rgba(255,255,255,0.03);
+            cursor: pointer;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            position: relative;
+            transition: background 0.2s ease;
+        }
+        .thread-item:hover { background: rgba(197, 160, 89, 0.05); }
+        .thread-item.active { 
+            background: var(--gold-light); 
+            border-left: 4px solid var(--gold); 
+        }
+
+        .avatar {
+            width: 50px;
+            height: 50px;
+            background: #1a1a1a;
+            border: 1px solid var(--border);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            color: var(--gold);
+            flex-shrink: 0;
+            font-family: var(--font-serif);
+        }
+
+        .thread-content { flex: 1; min-width: 0; }
+        .thread-user { 
+            display: block; 
+            font-weight: 600; 
+            font-size: 0.95rem; 
+            color: var(--text);
+            margin-bottom: 2px;
+        }
+        .thread-product { 
+            display: block; 
+            font-size: 0.7rem; 
+            color: var(--gold); 
+            text-transform: uppercase; 
+            letter-spacing: 0.5px;
+            margin-bottom: 6px;
+        }
+        .thread-preview { 
+            font-size: 0.85rem; 
+            color: var(--text-muted); 
+            white-space: nowrap; 
+            overflow: hidden; 
+            text-overflow: ellipsis; 
+        }
+
+        .unread-indicator {
+            width: 10px;
+            height: 10px;
+            background: var(--danger);
+            border-radius: 50%;
+            position: absolute;
+            right: 25px;
+            top: 50%;
+            transform: translateY(-50%);
+            box-shadow: 0 0 10px rgba(255, 76, 76, 0.4);
+        }
+
+        /* --- CHAT MAIN AREA --- */
+       
+        .chat-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    min-height: 0;
+}
+#activeChat {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
+.message-container {
+    flex: 1;
+    overflow-y: auto;
+    min-height: 0;
+}
+
+        .chat-header {
+            padding: 20px 30px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            background: rgba(5, 5, 5, 0.9);
+            backdrop-filter: blur(10px);
+            height: 80px;
+        }
+
+        .mobile-back {
+            display: none;
+            background: none;
+            border: none;
+            color: var(--gold);
+            font-size: 1.3rem;
+            margin-right: 20px;
+            cursor: pointer;
+        }
+
+        .chat-title h3 { font-family: var(--font-serif); font-size: 1.2rem; }
+        .chat-title p { color: var(--gold); font-size: 0.75rem; letter-spacing: 1px; }
+
+        .message-container {
+            flex: 1;
+            padding: 30px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            background-image: linear-gradient(rgba(197, 160, 89, 0.01) 1px, transparent 1px), linear-gradient(90deg, rgba(197, 160, 89, 0.01) 1px, transparent 1px);
+            background-size: 30px 30px;
+        }
+
+        .msg {
+            max-width: 75%;
+            padding: 14px 18px;
+            border-radius: 18px;
+            font-size: 0.92rem;
+            line-height: 1.5;
+            position: relative;
+            animation: msgSlide 0.3s ease-out;
+        }
+        @keyframes msgSlide { from { opacity: 0; transform: translateY(10px); } }
+
+        .msg.user {
+            align-self: flex-start;
+            background: #1a1a1a;
+            color: white;
+            border-bottom-left-radius: 2px;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .msg.admin {
+            align-self: flex-end;
+            background: var(--gold);
+            color: #000;
+            font-weight: 500;
+            border-bottom-right-radius: 2px;
+        }
+
+        .msg-time {
+            display: block;
+            font-size: 0.65rem;
+            margin-top: 6px;
+            opacity: 0.5;
+        }
+        .admin .msg-time { color: rgba(0,0,0,0.6); }
+
+        /* --- INPUT AREA --- */
+        .input-area {
+            padding: 25px 30px;
+            background: var(--bg-sidebar);
+            border-top: 1px solid var(--border);
+        }
+
+        .input-wrapper {
+            display: flex;
+            gap: 15px;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .chat-input {
+            flex: 1;
+            background: #000;
+            border: 1px solid var(--border);
+            border-radius: 30px;
+            padding: 12px 25px;
+            color: white;
+            outline: none;
+            font-family: var(--font-sans);
+            font-size: 0.9rem;
+            transition: 0.3s;
+        }
+        .chat-input:focus { border-color: var(--gold); box-shadow: 0 0 10px rgba(197, 160, 89, 0.2); }
+
+        .send-btn {
+            width: 48px;
+            height: 48px;
+            background: var(--gold);
+            border: none;
+            border-radius: 50%;
+            color: black;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: 0.3s;
+            flex-shrink: 0;
+        }
+        .send-btn:hover { transform: scale(1.08); box-shadow: 0 0 15px rgba(197, 160, 89, 0.4); }
+
+        /* --- EMPTY STATE --- */
+        .empty-view {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            opacity: 0.3;
+        }
+        .empty-view i { font-size: 5rem; color: var(--gold); margin-bottom: 20px; }
+
+        /* --- MOBILE ADAPTATION --- */
+        @media (max-width: 850px) {
+            .sidebar {
+                position: absolute;
+                left: 0; top: 0;
+                width: 100%;
+                height: 100%;
+            }
+            .sidebar.hidden { transform: translateX(-100%); }
+            .mobile-back { display: block; }
+            .chat-main { width: 100%; }
+            .input-area { padding-bottom: calc(25px + env(safe-area-inset-bottom)); }
+        }
+    </style>
+</head>
+<body>
+
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <a href="admin.html" class="back-link"><i class="fa-solid fa-arrow-left"></i> Dashboard</a>
+            <div class="sidebar-title-row">
+                <h2>Support</h2>
+                <button class="refresh-btn" onclick="AdminChat.refreshThreads()">
+                    <i class="fa-solid fa-rotate-right"></i>
+                </button>
+            </div>
+        </div>
+        <div class="thread-list" id="threadList">
+            </div>
+    </aside>
+
+    <main class="chat-main">
+        <div id="noChatSelected" class="empty-view">
+            <i class="fa-solid fa-comments"></i>
+            <h2 style="font-family: var(--font-serif)">Atelier Support</h2>
+            <p>Select a client thread to start styling</p>
+        </div>
+
+        <div id="activeChat" style="display: none; flex: 1; flex-direction: column;">
+            <header class="chat-header">
+                <button class="mobile-back" onclick="AdminChat.hideChat()"><i class="fa-solid fa-chevron-left"></i></button>
+                <div class="chat-title">
+                    <h3 id="targetUserName">Guest Client</h3>
+                    <p id="targetProductName">Inquiry</p>
+                </div>
+            </header>
+
+            <div class="message-container" id="messageBox">
+                </div>
+
+            <div class="input-area">
+                <form class="input-wrapper" onsubmit="AdminChat.handleSend(event)">
+                    <input type="text" id="adminInput" class="chat-input" placeholder="Type your response..." autocomplete="off">
+                    <button type="submit" class="send-btn">
+                        <i class="fa-solid fa-paper-plane"></i>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const AdminChat = (function() {
+            // Configuration
+            const SUPABASE_URL = 'https://lxtoxjhcdtzuxyirzxpc.supabase.co';
+            const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx4dG94amhjZHR6dXh5aXJ6eHBjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwMDU4OTAsImV4cCI6MjA5MTU4MTg5MH0.F5lDJVYUF4aEq8DwkafoWy56I_K6ccpkXiarBJk1LAo';
+            const client = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+            let activeThread = null;
+            let refreshInterval = null;
+
+            return {
+                async init() {
+                    console.log("Admin Support Initialized...");
+                    await this.refreshThreads();
+                    // Set up background polling
+                    refreshInterval = setInterval(() => this.refreshThreads(), 15000);
+                },
+
+                /**
+                 * Fetches and groups all messages into threads.
+                 * Uses a secure error-handling approach to prevent [object Object]
+                 */
+                
+                                                async refreshThreads() {
+                    try {
+                        // 1. Fetch all messages
+                        const { data: messages, error: msgError } = await client
+                            .from('stylist_chats')
+                            .select('*')
+                            .order('created_at', { ascending: false });
+
+                        if (msgError) throw msgError;
+                        
+                        // Handle empty state gracefully
+                        if (!messages || messages.length === 0) {
+                            this.renderThreadList([]);
+                            return;
+                        }
+
+                        // 2. Fetch all Profiles Safely (Filters out nulls and prevents empty array crashes)
+                        const userIds = [...new Set(messages.map(m => m.user_id))].filter(Boolean);
+                        let profiles = [];
+                        if (userIds.length > 0) {
+                            const { data: profileData } = await client
+                                .from('profiles')
+                                .select('id, full_name')
+                                .in('id', userIds);
+                            if (profileData) profiles = profileData;
+                        }
+
+                        // 3. Fetch Product names Safely
+                        const productIds = [...new Set(messages.map(m => m.product_id))].filter(Boolean);
+                        let products = [];
+                        if (productIds.length > 0) {
+                            const { data: productData } = await client
+                                .from('products')
+                                .select('id, name')
+                                .in('id', productIds);
+                            if (productData) products = productData;
+                        }
+
+                        // 4. Group messages into threads
+                        const threads = {};
+                        messages.forEach(msg => {
+                            const threadKey = `${msg.user_id}_${msg.product_id}`;
+                            if (!threads[threadKey]) {
+                                const userProfile = profiles.find(p => p.id === msg.user_id);
+                                const productInfo = products.find(pr => pr.id === msg.product_id);
+
+                                threads[threadKey] = {
+                                    ...msg,
+                                    userName: userProfile?.full_name || 'Guest Client',
+                                    productName: productInfo?.name || 'Inquiry',
+                                    unread: msg.sender === 'user' && msg.is_read === false
+                                };
+                            }
+                        });
+
+                        this.renderThreadList(Object.values(threads));
+
+                    } catch (err) {
+                        console.error("Support Refresh Failed:", err.message);
+                    }
+                },
+                
+
+
+                renderThreadList(threadArray) {
+                    const list = document.getElementById('threadList');
+                    list.innerHTML = threadArray.map(t => `
+                        <div class="thread-item ${activeThread?.key === `${t.user_id}_${t.product_id}` ? 'active' : ''}" 
+                             onclick="AdminChat.selectThread('${t.user_id}', '${t.product_id}', '${t.userName.replace(/'/g, "\\'")}', '${t.productName.replace(/'/g, "\\'")}')">
+                            <div class="avatar">${t.userName.charAt(0)}</div>
+                            <div class="thread-content">
+                                <span class="thread-user">${t.userName}</span>
+                                <span class="thread-product">${t.productName}</span>
+                                <p class="thread-preview">${t.message}</p>
+                            </div>
+                            ${t.unread ? '<div class="unread-indicator"></div>' : ''}
+                        </div>
+                    `).join('');
+                },
+
+                async selectThread(userId, productId, userName, productName) {
+                    activeThread = { userId, productId, key: `${userId}_${productId}` };
+
+                    // UI state transition
+                    document.getElementById('noChatSelected').style.display = 'none';
+                    document.getElementById('activeChat').style.display = 'flex';
+                    document.getElementById('targetUserName').innerText = userName;
+                    document.getElementById('targetProductName').innerText = productName;
+
+                    if (window.innerWidth <= 850) {
+                        document.getElementById('sidebar').classList.add('hidden');
+                    }
+
+                    // Mark unread messages as read in DB
+                    await client.from('stylist_chats')
+                        .update({ is_read: true })
+                        .match({ user_id: userId, product_id: productId, sender: 'user' });
+
+                    this.loadMessages();
+                    this.refreshThreads(); // Update the sidebar indicators
+                },
+
+                                async loadMessages() {
+                    if (!activeThread) return;
+
+                    const { data, error } = await client
+                        .from('stylist_chats')
+                        .select('*')
+                        .match({ user_id: activeThread.userId, product_id: activeThread.productId })
+                        .order('created_at', { ascending: true });
+
+                    if (error) return;
+                    
+                    // Grab the target user's name from the header to inject into the user bubbles
+                    const targetUserName = document.getElementById('targetUserName').innerText;
+
+                    const box = document.getElementById('messageBox');
+                    box.innerHTML = data.map(m => `
+                        <div class="msg ${m.sender}">
+                            <span style="display: block; font-size: 0.7rem; font-weight: 600; margin-bottom: 5px; opacity: 0.7; font-family: var(--font-sans);">
+                                ${m.sender === 'admin' ? 'You' : targetUserName}
+                            </span>
+                            ${m.message}
+                            <span class="msg-time">${new Date(m.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                        </div>
+                    `).join('');
+                    box.scrollTop = box.scrollHeight;
+                },
+                
+
+                async handleSend(e) {
+                    e.preventDefault();
+                    const input = document.getElementById('adminInput');
+                    const text = input.value.trim();
+
+                    if (!text || !activeThread) return;
+
+                    input.value = '';
+
+                    const { error } = await client.from('stylist_chats').insert({
+                        user_id: activeThread.userId,
+                        product_id: activeThread.productId,
+                        message: text,
+                        sender: 'admin',
+                        is_read: true
+                    });
+
+                    if (error) {
+                        alert("Failed to send: " + error.message);
+                    } else {
+                        this.loadMessages();
+                        this.refreshThreads();
+                    }
+                },
+
+                hideChat() {
+                    document.getElementById('sidebar').classList.remove('hidden');
+                }
+            };
+        })();
+
+        // Start App
+        document.addEventListener('DOMContentLoaded', () => AdminChat.init());
+    </script>
+</body>
+</html>

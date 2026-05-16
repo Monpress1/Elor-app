@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ELOR | Elite Support</title>
+    
+    <!-- Supabase & Fonts -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        :root {
+            --bg-deep: #050505;          
+            --bg-card: #121212;          
+            --accent-gold: #D4AF37;      
+            --accent-gold-soft: rgba(212, 175, 55, 0.2);
+            --gold-glow: rgba(212, 175, 55, 0.4);
+            --text-main: #F8F8FF;        
+            --text-muted: #888888;       
+            --glass: rgba(255, 255, 255, 0.03);
+            
+            --font-serif: 'Playfair Display', serif;
+            --font-sans: 'Montserrat', sans-serif;
+            --transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+        body {
+            background-color: var(--bg-deep);
+            color: var(--text-main);
+            font-family: var(--font-sans);
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* --- HEADER & NAVIGATION --- */
+        .header {
+            padding: 12px 20px; display: flex; justify-content: space-between; align-items: center;
+            background: rgba(5, 5, 5, 0.95); backdrop-filter: blur(10px);
+            position: sticky; top: 0; z-index: 2000; border-bottom: 1px solid var(--accent-gold-soft);
+        }
+        .header-center { display: flex; flex-direction: column; align-items: center; }
+        .logo { font-family: var(--font-serif); font-size: 1.8rem; color: var(--accent-gold); letter-spacing: 4px; text-decoration: none; font-weight: 700; line-height: 1; }
+        .fancy-line-header { width: 40px; height: 1.5px; margin-top: 5px; background: linear-gradient(90deg, transparent, var(--accent-gold), transparent); }
+
+        .menu-btn, .cart-btn { font-size: 1.3rem; color: var(--text-main); cursor: pointer; width: 40px; text-align: center; text-decoration: none; }
+
+        /* --- SIDE DRAWER --- */
+        .side-menu {
+            position: fixed; top: 0; left: -100%; width: 80%; max-width: 400px; height: 100%;
+            background: #050505; z-index: 3000; transition: var(--transition);
+            padding: 60px 30px; border-right: 1px solid var(--accent-gold-soft); display: flex; flex-direction: column;
+        }
+        .side-menu.active { left: 0; }
+        .menu-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 2999; display: none; }
+        .menu-overlay.active { display: block; }
+        .menu-link { display: block; font-family: var(--font-serif); font-size: 1.3rem; color: var(--text-main); text-decoration: none; margin-bottom: 25px; transition: 0.3s; letter-spacing: 1px; }
+        .menu-link:hover { color: var(--accent-gold); }
+
+        /* --- MAIN SUPPORT WRAPPER (3D Area) --- */
+        .support-wrapper {
+            flex: 1;
+            position: relative;
+            perspective: 1000px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 20px;
+            overflow: hidden;
+        }
+
+        /* --- 3D ANIMATED BACKGROUND --- */
+        .bg-elements { position: absolute; width: 100%; height: 100%; z-index: 0; top: 0; left: 0; pointer-events: none; }
+        .orb { position: absolute; border-radius: 50%; filter: blur(80px); animation: move 20s infinite alternate; }
+        .orb-1 { width: 400px; height: 400px; background: rgba(212, 175, 55, 0.1); top: -10%; left: -10%; }
+        .orb-2 { width: 300px; height: 300px; background: rgba(184, 134, 11, 0.08); bottom: 10%; right: 5%; }
+
+        @keyframes move {
+            from { transform: translate(0, 0); }
+            to { transform: translate(100px, 50px); }
+        }
+
+        /* --- 3D GLASS CARD --- */
+        .support-container {
+            width: 100%;
+            max-width: 500px;
+            padding: 40px 30px;
+            background: var(--glass);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            border: 1px solid var(--accent-gold-soft);
+            border-radius: 20px;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.5), inset 0 0 15px rgba(212, 175, 55, 0.05);
+            transform-style: preserve-3d;
+            transition: transform 0.1s ease-out;
+            text-align: center;
+            position: relative;
+            z-index: 10;
+        }
+
+        .support-container h2 {
+            font-family: var(--font-serif);
+            font-style: italic;
+            color: var(--accent-gold);
+            font-size: 1.8rem;
+            margin-bottom: 30px;
+            transform: translateZ(30px);
+        }
+/* --- PREMIUM FORM FIXED --- */
+.input-group {
+    position: relative;
+    margin-bottom: 25px;
+    text-align: left;
+    /* Removed global transform here to manage it per-row for depth */
+}
+
+/* Fix: Specific stacking for the dropdown row */
+.input-group:nth-of-type(2) { 
+    z-index: 100; 
+    transform: translateZ(30px); /* Slightly further forward */
+}
+
+/* Fix: Lower stacking for the message row */
+.input-group:nth-of-type(3) { 
+    z-index: 10; 
+    transform: translateZ(20px); 
+}
+
+/* Identity row */
+.input-group:nth-of-type(1) { 
+    z-index: 5; 
+    transform: translateZ(20px); 
+}
+
+.input-group label {
+    font-size: 0.65rem;
+    color: var(--accent-gold);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 8px;
+    display: block;
+    opacity: 0.8;
+}
+
+input, textarea {
+    width: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    border: 1px solid var(--accent-gold-soft);
+    border-radius: 10px;
+    padding: 15px;
+    color: #fff;
+    font-family: inherit;
+    font-size: 0.9rem;
+    outline: none;
+    transition: 0.3s;
+    position: relative;
+}
+
+input:focus, textarea:focus {
+    border-color: var(--accent-gold);
+    box-shadow: 0 0 15px var(--gold-glow);
+    background: rgba(0, 0, 0, 0.8);
+}
+
+input:read-only { border-color: transparent; background: rgba(255, 255, 255, 0.03); color: var(--text-muted); }
+textarea { height: 120px; resize: none; }
+
+/* Ensure the Custom Input (when shown) doesn't break the layout */
+#customTopicRow {
+    display: none;
+    margin-top: 10px;
+    border: 1px solid var(--accent-gold);
+}
+
+     
+        /* --- CUSTOM PREMIUM DROPDOWN --- */
+        .custom-select-wrapper {
+            position: relative;
+            user-select: none;
+        }
+        
+        .custom-select-trigger {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid var(--accent-gold-soft);
+            border-radius: 10px;
+            padding: 15px;
+            color: #fff;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .custom-select-trigger:hover, .custom-select-wrapper.open .custom-select-trigger {
+            border-color: var(--accent-gold);
+            background: rgba(0, 0, 0, 0.8);
+        }
+
+        .custom-select-trigger i {
+            color: var(--accent-gold);
+            transition: transform 0.3s;
+        }
+
+        .custom-select-wrapper.open .custom-select-trigger i { transform: rotate(180deg); }
+
+        .custom-options {
+            position: absolute;
+            top: 110%;
+            left: 0;
+            right: 0;
+            background: #0a0a0a;
+            border: 1px solid var(--accent-gold-soft);
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+            transition: 0.3s;
+            z-index: 100;
+            overflow: hidden;
+        }
+
+        .custom-select-wrapper.open .custom-options {
+            opacity: 1;
+            visibility: visible;
+            pointer-events: all;
+        }
+
+        .custom-option {
+            padding: 15px;
+            font-size: 0.85rem;
+            color: var(--text-main);
+            cursor: pointer;
+            transition: 0.2s;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .custom-option:last-child { border-bottom: none; }
+
+        .custom-option:hover {
+            background: var(--accent-gold);
+            color: #000;
+            font-weight: 600;
+        }
+
+        #customTopicRow { display: none; margin-top: 15px; animation: fadeInDown 0.3s ease forwards; }
+
+        @keyframes fadeInDown {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* --- 3D GOLD BUTTON --- */
+        .btn-container { transform: translateZ(40px); margin-top: 10px; }
+
+        .submit-btn {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #B8860B 0%, #D4AF37 50%, #B8860B 100%);
+            border: none;
+            border-radius: 10px;
+            color: #000;
+            font-family: var(--font-sans);
+            font-size: 0.85rem;
+            font-weight: 700;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            cursor: pointer;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+            transition: 0.3s;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 15px 30px var(--gold-glow);
+        }
+
+        /* --- FOOTER --- */
+        .footer {
+            text-align: center;
+            padding: 20px;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            border-top: 1px solid rgba(255,255,255,0.05);
+            background: var(--bg-deep);
+            position: relative;
+            z-index: 10;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- OVERLAY & SIDE MENU -->
+    <div class="menu-overlay" id="menuOverlay" onclick="toggleMenu()"></div>
+    <div class="side-menu" id="sideDrawer">
+        <div style="padding-bottom: 5px;">
+            <p style="font-size: 0.65rem; text-transform: uppercase; letter-spacing: 2px; color: var(--text-muted); margin-bottom: 5px;">Welcome,</p>
+            <h2 id="menuUserName" style="font-family: var(--font-serif); font-size: 1.6rem; color: var(--accent-gold); font-weight: 600;">Guest</h2>
+        </div>
+        
+        <div style="height: 1.5px; width: 100%; background: linear-gradient(90deg, var(--accent-gold) 0%, transparent 85%); margin: 20px 0 35px 0; opacity: 0.6;"></div>
+
+        <a href="index.html" class="menu-link"><i class="fa-solid fa-store" style="margin-right:10px; font-size: 1rem; color: var(--accent-gold);"></i> Storefront</a>
+        <a href="orders.html" class="menu-link"><i class="fa-solid fa-box-open" style="margin-right:10px; font-size: 1rem; color: var(--accent-gold);"></i> Orders</a>
+        <a href="account.html" class="menu-link"><i class="fa-regular fa-user" style="margin-right:10px; font-size: 1rem; color: var(--accent-gold);"></i> Account</a>
+        <a href="About.html" class="menu-link"><i class="fa-solid fa-circle-info" style="margin-right:10px; font-size: 1rem; color: var(--accent-gold);"></i> About ELOR</a>
+        <a href="contact.html" class="menu-link" style="color: var(--accent-gold);"><i class="fa-solid fa-headset" style="margin-right:10px; font-size: 1rem; color: var(--accent-gold);"></i> Support</a>
+    </div>
+
+    <!-- HEADER -->
+    <header class="header">
+        <div class="menu-btn" onclick="toggleMenu()"><i class="fa-solid fa-bars-staggered"></i></div>
+        <div class="header-center">
+            <a href="index.html" class="logo">ELOR</a>
+            <div class="fancy-line-header"></div>
+        </div>
+        <a href="index.html" class="cart-btn">
+            <i class="fa-solid fa-arrow-left"></i>
+        </a>
+    </header>
+
+    <!-- MAIN 3D SUPPORT AREA -->
+    <main class="support-wrapper" id="supportWrapper">
+        <div class="bg-elements">
+            <div class="orb orb-1"></div>
+            <div class="orb orb-2"></div>
+        </div>
+
+        <div class="support-container" id="card">
+            <h2>Concierge Support</h2>
+
+            <form id="supportForm">
+                <div class="input-group">
+                    <label>Member Identity</label>
+                    <input type="text" id="userName" readonly placeholder="Synchronizing...">
+                </div>
+
+                <div class="input-group">
+                    <label>Subject of Inquiry</label>
+                    
+                    <!-- Custom Premium Select -->
+                    <div class="custom-select-wrapper" id="inquirySelect">
+                        <div class="custom-select-trigger">
+                            <span id="selectedTopicText">Select a Topic...</span>
+                            <i class="fa-solid fa-chevron-down"></i>
+                        </div>
+                        <div class="custom-options">
+                            <div class="custom-option" data-value="Order Status">Order Status & Tracking</div>
+                            <div class="custom-option" data-value="Sizing & Measurements">Sizing & Measurements</div>
+                            <div class="custom-option" data-value="Fabric Inquiry">Fabric & Material Inquiry</div>
+                            <div class="custom-option" data-value="Returns & Alterations">Returns & Alterations</div>
+                            <div class="custom-option" data-value="Delivery Issues">Delivery Issues</div>
+                            <div class="custom-option" data-value="Bespoke Consultation">Bespoke Consultation</div>
+                            <div class="custom-option" data-value="Custom Inquiry">Custom Inquiry (Other)</div>
+                        </div>
+                    </div>
+
+                    <!-- Hidden Custom Input -->
+                    <input type="text" id="customTopicRow" placeholder="Please specify your topic...">
+                </div>
+
+                <div class="input-group">
+                    <label>Message</label>
+                    <textarea id="complaint" placeholder="Elaborate on how we can assist you..." required></textarea>
+                </div>
+
+                <div class="btn-container">
+                    <button type="submit" class="submit-btn">Dispatch Inquiry</button>
+                </div>
+            </form>
+        </div>
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="footer">
+        <p>&copy; 2026 ELOR High-End Native Attire. All Rights Reserved.</p>
+    </footer>
+
+    <script>
+        // --- UI Toggles ---
+        function toggleMenu() {
+            document.getElementById('sideDrawer').classList.toggle('active');
+            document.getElementById('menuOverlay').classList.toggle('active');
+        }
+
+        // --- Supabase Config ---
+        const DB_URL = 'https://lxtoxjhcdtzuxyirzxpc.supabase.co';
+        const DB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx4dG94amhjZHR6dXh5aXJ6eHBjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwMDU4OTAsImV4cCI6MjA5MTU4MTg5MH0.F5lDJVYUF4aEq8DwkafoWy56I_K6ccpkXiarBJk1LAo';
+        const client = supabase.createClient(DB_URL, DB_KEY);
+
+        // --- Fetch User Name ---
+        async function initForm() {
+            const { data: { session } } = await client.auth.getSession();
+            const nameEl = document.getElementById('userName');
+            const menuName = document.getElementById('menuUserName');
+
+            if (session) {
+                const fullName = session.user.user_metadata?.full_name || session.user.email.split('@')[0];
+                nameEl.value = fullName;
+                menuName.innerText = fullName;
+            } else {
+                nameEl.value = "Guest Client";
+                nameEl.readOnly = false;
+            }
+        }
+
+        // --- Custom Dropdown Logic ---
+        const selectWrapper = document.getElementById('inquirySelect');
+        const selectTrigger = selectWrapper.querySelector('.custom-select-trigger');
+        const selectedText = document.getElementById('selectedTopicText');
+        const options = document.querySelectorAll('.custom-option');
+        const customInput = document.getElementById('customTopicRow');
+        
+        let currentTopic = "";
+
+        // Toggle dropdown
+        selectTrigger.addEventListener('click', (e) => {
+            e.stopPropagation();
+            selectWrapper.classList.toggle('open');
+        });
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', () => {
+            selectWrapper.classList.remove('open');
+        });
+
+        // Handle option selection
+        options.forEach(option => {
+            option.addEventListener('click', function(e) {
+                e.stopPropagation();
+                const value = this.getAttribute('data-value');
+                selectedText.innerText = value;
+                selectedText.style.color = "#fff"; // Make text bright once selected
+                currentTopic = value;
+                selectWrapper.classList.remove('open');
+
+                if (value === 'Custom Inquiry') {
+                    customInput.style.display = 'block';
+                    customInput.required = true;
+                } else {
+                    customInput.style.display = 'none';
+                    customInput.required = false;
+                    customInput.value = ''; // clear out if they switch back
+                }
+            });
+        });
+
+        // --- 3D Hover Effect ---
+        const wrapper = document.getElementById('supportWrapper');
+        const card = document.getElementById('card');
+        
+        wrapper.addEventListener('mousemove', (e) => {
+            // Only apply effect if on desktop (roughly)
+            if (window.innerWidth > 768) {
+                let xAxis = (window.innerWidth / 2 - e.pageX) / 40;
+                let yAxis = (window.innerHeight / 2 - e.pageY) / 40;
+                card.style.transform = `rotateY(${xAxis}deg) rotateX(${yAxis}deg)`;
+            }
+        });
+
+        wrapper.addEventListener('mouseleave', () => {
+            card.style.transform = `rotateY(0deg) rotateX(0deg)`;
+        });
+
+        // --- Form Logic ---
+        document.getElementById('supportForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            if (!currentTopic) {
+                alert("Please select a subject of inquiry.");
+                return;
+            }
+
+            const name = document.getElementById('userName').value;
+            const finalTopic = currentTopic === 'Custom Inquiry' ? document.getElementById('customTopicRow').value : currentTopic;
+            const message = document.getElementById('complaint').value;
+            
+            const subject = `ELOR Support: ${finalTopic} - from ${name}`;
+            const mailto = `mailto:elor@gmail.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(message)}`;
+            
+            window.location.href = mailto;
+        });
+
+        initForm();
+    </script>
+</body>
+</html>

@@ -1,0 +1,975 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- PWA Manifest link -->
+    <link rel="manifest" href="manifest.json">
+
+    <!-- iOS Meta Tags -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="ELOR">
+    <link rel="apple-touch-icon" href="elor.png">
+
+    <!-- Theme Color for Android Chrome -->
+    <meta name="theme-color" content="#050505">
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ELOR | High-End Native Attire</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600&family=Playfair+Display:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <style>
+        :root {
+            --bg-deep: #050505;          
+            --bg-card: #121212;          
+            --accent-gold: #D4AF37;      
+            --accent-gold-soft: rgba(212, 175, 55, 0.2);
+            --text-main: #F8F8FF;        
+            --text-muted: #888888;       
+            --danger: #ff4c4c;
+            
+            --font-serif: 'Playfair Display', serif;
+            --font-sans: 'Montserrat', sans-serif;
+            --transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body { background-color: #050505; color: var(--text-main); font-family: var(--font-sans); overflow-x: hidden; line-height: 1.5; }
+
+        /* --- HEADER & NAVIGATION --- */
+        .header {
+            padding: 12px 20px; display: flex; justify-content: space-between; align-items: center;
+            background: rgba(5, 5, 5, 0.95); backdrop-filter: blur(10px);
+            position: sticky; top: 0; z-index: 1000; border-bottom: 1px solid var(--accent-gold-soft);
+        }
+        .header-center { 
+            position: absolute; 
+            left: 50%; 
+            transform: translateX(-50%); 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+        }
+        .logo { font-family: var(--font-serif); font-size: 1.8rem; color: var(--accent-gold); letter-spacing: 4px; text-decoration: none; font-weight: 700; line-height: 1; }
+        .fancy-line-header { width: 40px; height: 1.5px; margin-top: 5px; background: linear-gradient(90deg, transparent, var(--accent-gold), transparent); }
+
+        .header-actions { display: flex; align-items: center; gap: 15px; margin-left: auto; }
+        .menu-btn, .cart-btn, .notif-btn { font-size: 1.3rem; color: var(--text-main); cursor: pointer; width: 40px; text-align: center; position: relative; }
+        .cart-badge {
+            position: absolute; top: -5px; right: 0; background: var(--danger); color: white;
+            font-size: 0.6rem; font-weight: bold; width: 16px; height: 16px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+        }
+
+        /* --- PREMIUM IN-APP NOTIFICATION DROPDOWN --- */
+        .notif-dropdown {
+            position: fixed; top: 75px; right: 20px; width: 360px; max-height: 480px;
+            background: rgba(10, 10, 10, 0.98); border: 1px solid var(--accent-gold);
+            border-radius: 16px; box-shadow: 0 20px 50px rgba(0,0,0,0.8), 0 0 30px rgba(212,175,55,0.1);
+            display: none; flex-direction: column; z-index: 2001; overflow: hidden;
+            backdrop-filter: blur(20px); transform: translateY(-10px); opacity: 0;
+            transition: opacity 0.3s ease, transform 0.3s ease;
+        }
+        .notif-dropdown.active { display: flex; transform: translateY(0); opacity: 1; }
+        .notif-header { padding: 16px 20px; border-bottom: 1px solid rgba(255,255,255,0.06); display: flex; justify-content: space-between; align-items: center; }
+        .notif-header h4 { font-family: var(--font-serif); color: var(--accent-gold); font-size: 1.1rem; font-weight: 600; letter-spacing: 1px; }
+        .notif-header-actions { display: flex; align-items: center; gap: 15px; }
+        .notif-mark-read { font-size: 0.7rem; color: var(--text-muted); cursor: pointer; text-transform: uppercase; letter-spacing: 1px; transition: 0.3s; }
+        .notif-mark-read:hover { color: var(--accent-gold); }
+        .notif-close-btn { font-size: 1.1rem; color: var(--text-muted); cursor: pointer; transition: 0.2s; }
+        .notif-close-btn:hover { color: var(--danger); }
+        .notif-body { overflow-y: auto; flex-grow: 1; scrollbar-width: none; }
+        .notif-body::-webkit-scrollbar { display: none; }
+        
+        .notif-item { padding: 14px 18px; border-bottom: 1px solid rgba(255,255,255,0.03); display: flex; gap: 12px; align-items: flex-start; cursor: pointer; transition: 0.2s ease; position: relative; }
+        .notif-item:hover { background: rgba(212, 175, 55, 0.02); }
+        .notif-item.unread { background: rgba(212, 175, 55, 0.04); }
+        .notif-item.unread::before { content: ''; position: absolute; left: 0; top: 0; height: 100%; width: 3px; background: var(--accent-gold); }
+        
+        .notif-icon-box { width: 34px; height: 34px; border-radius: 50%; background: #050505; border: 1px solid var(--accent-gold-soft); display: flex; align-items: center; justify-content: center; flex-shrink: 0; overflow: hidden; }
+        .notif-icon-box img { width: 100%; height: 100%; object-fit: cover; }
+        .notif-icon-box i { font-size: 0.85rem; color: var(--accent-gold); }
+        
+        .notif-details { flex-grow: 1; }
+        .notif-title { font-size: 0.8rem; font-weight: 600; color: #fff; margin-bottom: 2px; letter-spacing: 0.5px; }
+        .notif-content { font-size: 0.75rem; color: var(--text-muted); line-height: 1.4; word-break: break-word; }
+        .notif-time { font-size: 0.65rem; color: rgba(255,255,255,0.3); margin-top: 5px; text-transform: uppercase; }
+        .notif-empty { padding: 40px; text-align: center; color: var(--text-muted); font-size: 0.85rem; }
+
+        @media (max-width: 480px) {
+            .notif-dropdown { width: calc(100% - 30px); right: 15px; left: 15px; top: 70px; }
+        }
+
+        /* --- SIDE DRAWER --- */
+        .side-menu {
+            position: fixed; top: 0; left: -100%; width: 80%; height: 100%;
+            background: #050505; z-index: 2000; transition: var(--transition);
+            padding: 60px 30px; border-right: 1px solid var(--accent-gold-soft); display: flex; flex-direction: column;
+        }
+        .side-menu.active { left: 0; }
+        .menu-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1999; display: none; }
+        .menu-overlay.active { display: block; }
+        .menu-link { display: block; font-family: var(--font-serif); font-size: 1.3rem; color: var(--text-main); text-decoration: none; margin-bottom: 25px; transition: 0.3s; letter-spacing: 1px; }
+        .menu-link:hover { color: var(--accent-gold); }
+        .auth-divider { border-top: 1px solid rgba(255,255,255,0.1); margin: 20px 0; padding-top: 20px; }
+
+        /* --- FILTERS & RIBBON --- */
+        .filter-container { padding: 20px; }
+        .age-switch { display: flex; background: var(--bg-card); border: 1px solid var(--accent-gold-soft); border-radius: 50px; padding: 5px; position: relative; width: 100%; height: 54px; }
+        .age-btn { flex: 1; background: none; border: none; color: var(--text-muted); font-family: var(--font-sans); font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; z-index: 2; cursor: pointer; transition: var(--transition); }
+        .age-btn.active { color: #050505; }
+        .glider { position: absolute; height: 44px; width: calc(33.33% - 6px); background: var(--accent-gold); border-radius: 40px; top: 5px; left: 5px; transition: var(--transition); z-index: 1; transform: translateX(100%); }
+
+        .category-ribbon { display: flex; overflow-x: auto; gap: 25px; padding: 10px 20px; scrollbar-width: none; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .category-ribbon::-webkit-scrollbar { display: none; }
+        .cat-item { font-family: var(--font-serif); font-size: 1rem; color: var(--text-muted); white-space: nowrap; cursor: pointer; transition: 0.3s; padding-bottom: 5px; }
+        .cat-item.active { color: var(--accent-gold); border-bottom: 2px solid var(--accent-gold); }
+
+        /* --- HERO & TITLES --- */
+        .hero { text-align: center; padding: 30px 20px 20px; }
+        .hero h1 { font-family: var(--font-serif); font-size: 2rem; margin-bottom: 5px; font-weight: 600; }
+        .promise { color: var(--accent-gold); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 3px; font-weight: 500;}
+        .section-title { font-family: var(--font-serif); font-size: 1.5rem; text-align: center; margin: 40px 0 20px; color: var(--text-main); font-weight: 400; }
+        .section-title span { color: var(--accent-gold); font-style: italic; }
+
+        /* --- GRIDS & CARDS --- */
+        .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; padding: 0 15px 30px 15px; }
+        .slider-container { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; gap: 15px; padding: 0 15px 30px 15px; scrollbar-width: none; }
+        .slider-container::-webkit-scrollbar { display: none; }
+        .slider-container .card { flex: 0 0 65%; scroll-snap-align: center; }
+
+        .card { background: var(--bg-card); border: 1px solid rgba(255,255,255,0.04); border-radius: 8px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.3); animation: fadeIn 0.6s ease forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .img-box { width: 100%; aspect-ratio: 3/4; overflow: hidden; background: #0f0f0f; border-bottom: 1px solid rgba(255,255,255,0.02); cursor: pointer; position: relative;}
+        .product-img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s ease; }
+        .img-box:hover .product-img { transform: scale(1.05); }
+        .skeleton { position: absolute; top:0; left:0; height: 100%; width: 100%; background: linear-gradient(90deg, #111 25%, #1a1a1a 50%, #111 75%); background-size: 200% 100%; animation: loading 1.5s infinite; z-index: 1;}
+        @keyframes loading { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+        .card-info { padding: 15px 12px; display: flex; flex-direction: column; flex-grow: 1; text-align: center; }
+        .p-name { font-family: var(--font-serif); font-size: 0.95rem; margin-bottom: 6px; font-weight: 400; color: #fff;}
+        .p-price { color: var(--accent-gold); font-size: 0.85rem; font-weight: 500; margin-bottom: 15px; }
+        .order-btn { margin-top: auto; width: 100%; padding: 12px; background: transparent; border: 1px solid var(--accent-gold-soft); color: var(--accent-gold); font-family: var(--font-sans); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1.5px; font-weight: 600; cursor: pointer; transition: 0.3s; border-radius: 4px; }
+        .order-btn:hover { background: var(--accent-gold); color: #050505; }
+
+        /* Loading Spinner for Infinite Scroll */
+        .loader-wrapper { text-align: center; padding: 20px; display: none; }
+        .spinner { border: 2px solid rgba(212, 175, 55, 0.2); border-top: 2px solid var(--accent-gold); border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; margin: 0 auto; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* --- GLASSMORPHISM MODAL --- */
+        .glass-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 9999; background: rgba(0,0,0,0.7); backdrop-filter: blur(8px); display: none; align-items: center; justify-content: center; opacity: 0; transition: 0.3s; }
+        .glass-overlay.active { display: flex; opacity: 1; }
+        .glass-modal { background: rgba(18, 18, 18, 0.85); border: 1px solid var(--accent-gold); border-radius: 16px; padding: 30px; max-width: 400px; width: 90%; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5); transform: translateY(20px); transition: 0.3s; }
+        .glass-overlay.active .glass-modal { transform: translateY(0); }
+        .gm-icon { font-size: 3rem; color: var(--accent-gold); margin-bottom: 15px; }
+        .gm-title { font-family: 'Playfair Display'; font-size: 1.5rem; margin-bottom: 10px; color: var(--accent-gold); }
+        .gm-text { font-size: 0.9rem; color: var(--text-muted); margin-bottom: 25px; line-height: 1.5; }
+        .gm-actions { display: flex; gap: 10px; justify-content: center; }
+        .gm-btn { padding: 12px 24px; border-radius: 6px; font-weight: 600; cursor: pointer; text-transform: uppercase; font-size: 0.8rem; letter-spacing: 1px; border: none; }
+        .gm-confirm { background: var(--accent-gold); color: #000; flex: 1; }
+        .gm-cancel { background: transparent; border: 1px solid var(--text-muted); color: var(--text-main); flex: 1; display: none; }
+
+        /* --- MENU PROFILE STYLES --- */
+        .menu-profile-header { padding-bottom: 5px; }
+        .welcome-tag { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 2px; color: var(--text-muted); margin-bottom: 5px; }
+        .user-name-display { font-family: var(--font-serif); font-size: 1.6rem; color: var(--accent-gold); font-weight: 600; text-transform: capitalize; }
+        .fancy-menu-divider { height: 1.5px; width: 100%; background: linear-gradient(90deg, var(--accent-gold) 0%, transparent 85%); margin: 20px 0 35px 0; opacity: 0.6; }
+        
+        /* --- NATIVE WHATSAPP-STYLE TOAST FLOATING BANNER --- */
+        .native-toast {
+            position: fixed;
+            top: -100px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 92%;
+            max-width: 380px;
+            background: rgba(15, 15, 15, 0.95);
+            border: 1px solid var(--accent-gold);
+            border-radius: 12px;
+            padding: 10px 14px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.6), 0 0 20px rgba(212,175,55,0.05);
+            z-index: 10000;
+            backdrop-filter: blur(15px);
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            cursor: pointer;
+        }
+        .native-toast.show {
+            transform: translate(-50%, 120px); /* Positioned elegantly below the header */
+        }
+        .toast-img-box {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            overflow: hidden;
+            flex-shrink: 0;
+            border: 1px solid var(--accent-gold-soft);
+        }
+        .toast-img-box img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .toast-details {
+            flex-grow: 1;
+        }
+        .toast-title {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #fff;
+            margin-bottom: 2px;
+            letter-spacing: 0.5px;
+        }
+        .toast-msg {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            line-height: 1.3;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+    </style>
+</head>
+<body>
+    <!-- Native WhatsApp-style Pop-up Banner Component -->
+    <div class="native-toast" id="whatsappToast">
+        <div class="toast-img-box">
+            <img src="elor.png" alt="ELOR" id="toastIcon">
+        </div>
+        <div class="toast-details" id="toastDetails">
+            <div class="toast-title" id="toastTitle">Notification</div>
+            <div class="toast-msg" id="toastMsg">New update available.</div>
+        </div>
+    </div>
+
+    <div class="menu-overlay" id="menuOverlay" onclick="ELOR.toggleMenu()"></div>
+    <div class="side-menu" id="sideDrawer">
+        <div class="menu-profile-header">
+            <p class="welcome-tag">Welcome back,</p>
+            <h2 class="user-name-display" id="menuUserName">Guest</h2>
+        </div>
+        
+        <div class="fancy-menu-divider"></div>
+
+        <a href="orders.html" class="menu-link" style="display:flex; align-items:center; justify-content:space-between;">
+            <div>
+                <i class="fa-solid fa-box-open" style="margin-right:10px; font-size: 1rem; color: var(--accent-gold);"></i>
+                Orders
+            </div>
+            <span class="cart-badge" id="headerBadge" style="display:none;">0</span>
+        </a>
+        <a href="account.html" class="menu-link"><i class="fa-regular fa-user" style="margin-right:10px; font-size: 1rem; color: var(--accent-gold);"></i> Account</a>
+        <a href="about.html" class="menu-link" onclick="ELOR.toggleMenu()"><i class="fa-solid fa-circle-info" style="margin-right:10px; font-size: 1rem; color: var(--accent-gold);"></i> About ELOR</a>
+        <a href="contact.html" class="menu-link" onclick="ELOR.toggleMenu()"><i class="fa-solid fa-headset" style="margin-right:10px; font-size: 1rem; color: var(--accent-gold);"></i> Support</a>
+        
+        <!-- MENU DRAWER NOTIFICATIONS ITEM PLACED UNDER SUPPORT -->
+        <a href="#" class="menu-link" onclick="ELOR.toggleMenu(); ELOR.toggleNotifDropdown(event);" style="display:flex; align-items:center; justify-content:space-between;">
+            <div>
+                <i class="fa-solid fa-bell" style="margin-right:10px; font-size: 1rem; color: var(--accent-gold);"></i>
+                Notifications
+            </div>
+            <span class="cart-badge" id="menuNotifBadge" style="display:none; position:static;">0</span>
+        </a>
+
+        <div class="auth-divider"></div>
+        <a href="#" class="menu-link" id="authLink" onclick="ELOR.handleAuthAction()" style="color: var(--accent-gold); font-size: 1rem; text-transform: uppercase;">Sign In</a>
+    </div>
+
+    <header class="header">
+        <div class="menu-btn" onclick="ELOR.toggleMenu()"><i class="fa-solid fa-bars-staggered"></i></div>
+        <div class="header-center">
+            <a href="index.html" class="logo">ELOR</a>
+            <div class="fancy-line-header"></div>
+        </div>
+        
+        <div class="header-actions">
+            <!-- HEADER NOTIFICATION BELL -->
+            <div class="notif-btn" onclick="ELOR.toggleNotifDropdown(event)">
+                <i class="fa-solid fa-bell"></i>
+                <span class="cart-badge" id="headerNotifBadge" style="display: none;">0</span>
+            </div>
+            <!-- SHOPPING CART ICON CONVERTED TO PREMIUM SHOPPING BAG -->
+            <div class="cart-btn" onclick="window.location.href='orders.html'">
+                <i class="fa-solid fa-bag-shopping"></i>
+                <span class="cart-badge" id="chatBadge" style="display: none;">0</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- ENHANCED IN-APP DROPDOWN PANEL COMPONENT WITH CANCEL ICON -->
+    <div class="notif-dropdown" id="notifPanel">
+        <div class="notif-header">
+            <h4>Notifications</h4>
+            <div class="notif-header-actions">
+                <span class="notif-mark-read" onclick="ELOR.markAllNotificationsRead()">Mark all as read</span>
+                <i class="fa-solid fa-xmark notif-close-btn" onclick="ELOR.toggleNotifDropdown(event)"></i>
+            </div>
+        </div>
+        <div class="notif-body" id="notifPanelBody">
+            <div class="notif-empty">Loading notifications...</div>
+        </div>
+    </div>
+
+    <section class="filter-container">
+        <div class="age-switch">
+            <div class="glider" id="ageGlider"></div>
+            <button class="age-btn" onclick="ELOR.setAge('Young Mogul', 0)">Young</button>
+            <button class="age-btn active" onclick="ELOR.setAge('All', 1)">All</button>
+            <button class="age-btn" onclick="ELOR.setAge('Elder Statesman', 2)">Elder</button>
+        </div>
+    </section>
+
+    <nav class="category-ribbon" id="catRibbon">
+        <div class="cat-item active" onclick="ELOR.setCategory('All', this)">All</div>
+        <div class="cat-item" onclick="ELOR.setCategory('Agbada', this)">Agbada</div>
+        <div class="cat-item" onclick="ELOR.setCategory('Senator', this)">Senator</div>
+        <div class="cat-item" onclick="ELOR.setCategory('Kaftan', this)">Kaftan</div>
+        <div class="cat-item" onclick="ELOR.setCategory('Atiku', this)">Atiku</div>
+        <div class="cat-item" onclick="ELOR.setCategory('Accessories', this)">Accessories</div>
+    </nav>
+
+    <section class="hero">
+        <h1 id="heroTitle">The Collection</h1>
+        <p class="promise">7 to 14-Day Delivery</p>
+    </section>
+
+    <main class="grid" id="topGrid"></main>
+
+    <div id="sliderWrapper" style="display: none;">
+        <h2 class="section-title">New <span>Arrivals</span></h2>
+        <div class="slider-container" id="sliderGrid"></div>
+    </div>
+
+    <div id="personalWrapper" style="display: none;">
+        <h2 class="section-title" id="personalTitle">Made <span>For You</span></h2>
+        <main class="grid" id="personalGrid"></main>
+    </div>
+
+    <div id="moreWrapper" style="display: none;">
+        <h2 class="section-title">More to <span>Explore</span></h2>
+        <main class="grid" id="moreGrid"></main>
+    </div>
+
+    <div class="loader-wrapper" id="scrollLoader">
+        <div class="spinner"></div>
+    </div>
+
+    <div class="glass-overlay" id="glass-modal">
+        <div class="glass-modal">
+            <i class="fa-solid fa-gem gm-icon" id="gm-icon"></i>
+            <h3 class="gm-title" id="gm-title">Notice</h3>
+            <p class="gm-text" id="gm-text">Message goes here</p>
+            <div class="gm-actions">
+                <button class="gm-btn gm-cancel" id="gm-cancel">Cancel</button>
+                <button class="gm-btn gm-confirm" id="gm-confirm" onclick="ELOR.closeAlert()">Understood</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const ELOR = (function() {
+            const DB_URL = 'https://lxtoxjhcdtzuxyirzxpc.supabase.co';
+            const DB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx4dG94amhjZHR6dXh5aXJ6eHBjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwMDU4OTAsImV4cCI6MjA5MTU4MTg5MH0.F5lDJVYUF4aEq8DwkafoWy56I_K6ccpkXiarBJk1LAo';
+            const client = window.supabase.createClient(DB_URL, DB_KEY);
+
+            let allProducts = [];
+            let currentAge = 'All';
+            let currentCat = 'All';
+            let userSession = null;
+            let currentNotifications = [];
+            
+            let infiniteScrollPool = [];
+            let currentDisplayCount = 0;
+            const INITIAL_BATCH = 30;
+            const SCROLL_BATCH = 10;
+
+            const formatPrice = (num) => new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN', maximumFractionDigits: 0 }).format(num);
+
+            const shuffleArray = (array) => {
+                let curId = array.length;
+                while (0 !== curId) {
+                    let randId = Math.floor(Math.random() * curId);
+                    curId -= 1;
+                    let tmp = array[curId];
+                    array[curId] = array[randId];
+                    array[randId] = tmp;
+                }
+                return array;
+            };
+
+            // Premium Synthetic Notification Chime using Web Audio API
+            const playNotificationChime = () => {
+                try {
+                    const AudioContext = window.AudioContext || window.webkitAudioContext;
+                    if (!AudioContext) return;
+                    const ctx = new AudioContext();
+                    
+                    // First High Soft Note
+                    const osc1 = ctx.createOscillator();
+                    const gain1 = ctx.createGain();
+                    osc1.type = 'sine';
+                    osc1.frequency.setValueAtTime(880, ctx.currentTime); // A5 Note
+                    gain1.gain.setValueAtTime(0.05, ctx.currentTime);
+                    gain1.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
+                    osc1.connect(gain1);
+                    gain1.connect(ctx.destination);
+                    osc1.start(ctx.currentTime);
+                    osc1.stop(ctx.currentTime + 0.3);
+
+                    // Second Elegant Harmonizing Note
+                    const osc2 = ctx.createOscillator();
+                    const gain2 = ctx.createGain();
+                    osc2.type = 'sine';
+                    osc2.frequency.setValueAtTime(1318.51, ctx.currentTime + 0.08); // E6 Note
+                    gain2.gain.setValueAtTime(0.04, ctx.currentTime + 0.08);
+                    gain2.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.45);
+                    osc2.connect(gain2);
+                    gain2.connect(ctx.destination);
+                    osc2.start(ctx.currentTime + 0.08);
+                    osc2.stop(ctx.currentTime + 0.45);
+                } catch (error) {
+                    console.log("Audio Context playback context initialization blocked or delayed:", error);
+                }
+            };
+
+            const createCardHTML = (p, isEager = false) => {
+                const loadAttr = isEager ? '' : 'loading="lazy"';
+                return `
+                <div class="card">
+                    <div class="img-box" onclick="ELOR.handleProductClick('${p.id}', '${p.category}')">
+                        <div class="skeleton"></div>
+                        <img src="${p.image_url}" class="product-img" ${loadAttr} alt="${p.name}" onload="this.previousElementSibling.style.display='none'">
+                    </div>
+                    <div class="card-info">
+                        <h3 class="p-name">${p.name}</h3>
+                        <p class="p-price">${formatPrice(p.final_price)}</p>
+                        <button class="order-btn" onclick="ELOR.handleProductClick('${p.id}', '${p.category}')">Order Now</button>
+                    </div>
+                </div>
+            `};
+
+            return {
+                async init() {
+                    this.checkLocalCache();
+
+                    const { data: { session } } = await client.auth.getSession();
+                    userSession = session;
+
+                    ELOR.updateAuthUI();
+
+                    client.auth.onAuthStateChange((_event, session) => {
+                        userSession = session;
+                        ELOR.updateAuthUI();
+
+                        if (userSession) {
+                            ELOR.fetchInAppNotifications({ autoDrop: false });
+                            ELOR.setupNotificationSubscription();
+                        } else {
+                            ELOR.clearNotificationBadges();
+                        }
+                    });
+
+                    if (userSession) {
+                        ELOR.fetchInAppNotifications({ autoDrop: true });
+                        ELOR.setupNotificationSubscription();
+                    }
+
+                    this.fetchProducts();
+                    this.setupScrollObserver();
+                    this.setupDropdownCloser();
+                },
+
+                checkLocalCache() {
+                    const cached = localStorage.getItem('elor_products');
+                    if (cached) {
+                        allProducts = JSON.parse(cached);
+                        this.render();
+                    }
+                },
+
+                async fetchProducts() {
+                    try {
+                        const { data, error } = await client.from('products').select('*').order('created_at', { ascending: false });
+                        if (error) throw error;
+                        
+                        allProducts = data;
+                        localStorage.setItem('elor_products', JSON.stringify(data));
+                        this.render();
+                    } catch (err) {
+                        console.error("Fetch failed:", err);
+                        if(allProducts.length === 0) {
+                            document.getElementById('topGrid').innerHTML = `<p style="grid-column: 1/-1; padding:50px; text-align:center;">Failed to connect to database.</p>`;
+                        }
+                    }
+                },
+
+                // 1. ADDED: Native WhatsApp-style banner engine helper
+                showNativeToast(notif) {
+                    const toast = document.getElementById('whatsappToast');
+                    const titleEl = document.getElementById('toastTitle');
+                    const msgEl = document.getElementById('toastMsg');
+                    const iconEl = document.getElementById('toastIcon');
+
+                    if (!toast || !notif) return;
+
+                    titleEl.innerText = notif.title;
+                    msgEl.innerText = notif.content;
+                    
+                    if (notif.type === 'product') {
+                        iconEl.src = 'logo.png';
+                    } else {
+                        iconEl.src = 'elor.png';
+                    }
+
+                    toast.onclick = () => {
+                        toast.classList.remove('show');
+                        this.handleNotificationItemClick(notif.id, notif.type, notif.target_id, notif.user_id === null);
+                    };
+
+                    toast.classList.add('show');
+                    playNotificationChime();
+
+                    setTimeout(() => {
+                        toast.classList.remove('show');
+                    }, 5000);
+                },
+
+                // 2. REPLACED: Updated with the 2-minute entry cooldown check
+                async fetchInAppNotifications(options = { autoDrop: false }) {
+                    if (!userSession) return;
+                    try {
+                        const { data, error } = await client
+                            .from('notifications')
+                            .select('*')
+                            .or(`user_id.eq.${userSession.user.id},user_id.is.null`)
+                            .order('created_at', { ascending: false })
+                            .limit(20);
+
+                        if (error) throw error;
+                        currentNotifications = data || [];
+                        this.renderNotifications();
+
+                        const now = Date.now();
+                        const lastVisit = localStorage.getItem('elor_last_app_entry');
+                        localStorage.setItem('elor_last_app_entry', now.toString());
+
+                        if (lastVisit && (now - parseInt(lastVisit) < 120000)) {
+                            return;
+                        }
+
+                        if (options.autoDrop && currentNotifications.length > 0) {
+                            const latestNotif = currentNotifications[0];
+                            const readGlobalIds = JSON.parse(localStorage.getItem('elor_read_global_notifs') || '[]');
+                            
+                            let isUnread = false;
+                            if (latestNotif.user_id === null) {
+                                isUnread = !readGlobalIds.includes(latestNotif.id);
+                            } else {
+                                isUnread = !latestNotif.is_read;
+                            }
+
+                            if (isUnread) {
+                                setTimeout(() => {
+                                    this.showNativeToast(latestNotif);
+                                    this.markSingleNotificationAsRead(latestNotif);
+                                }, 1200);
+                            }
+                        }
+                    } catch (e) {
+                        console.error('Error fetching notifications:', e);
+                    }
+                },
+
+                // 3. REPLACED: Realtime listener pointing to your new showNativeToast
+                setupNotificationSubscription() {
+                    if (!userSession) return;
+                    
+                    client.removeAllChannels();
+
+                    client.channel('realtime-notifications')
+                        .on('postgres_changes', { event: '*', schema: 'public', table: 'notifications' }, payload => {
+                            const n = payload.new;
+                            
+                            if (n.user_id === null || n.user_id === userSession.user.id) {
+                                currentNotifications = currentNotifications.filter(notif => notif.id !== n.id);
+                                currentNotifications.unshift(n);
+                                if (currentNotifications.length > 20) currentNotifications.pop();
+                                
+                                this.renderNotifications();
+                                
+                                this.showNativeToast(n);
+                                this.markSingleNotificationAsRead(n);
+                            }
+                        })
+                        .subscribe();
+                },
+
+                // 4. REPLACED: Instantly deletes user's rows from database pipeline
+                async markAllNotificationsRead() {
+                    if (!userSession || currentNotifications.length === 0) return;
+                    try {
+                        const readGlobalIds = JSON.parse(localStorage.getItem('elor_read_global_notifs') || '[]');
+                        currentNotifications.forEach(n => {
+                            if (n.user_id === null && !readGlobalIds.includes(n.id)) {
+                                readGlobalIds.push(n.id);
+                            }
+                        });
+                        localStorage.setItem('elor_read_global_notifs', JSON.stringify(readGlobalIds));
+
+                        currentNotifications = currentNotifications.filter(n => n.user_id === null);
+                        this.renderNotifications();
+
+                        await client
+                            .from('notifications')
+                            .delete()
+                            .eq('user_id', userSession.user.id);
+                            
+                    } catch (e) {
+                        console.error('Error hard deleting notifications from db pipeline:', e);
+                    }
+                },
+
+                renderNotifications() {
+                    const panelBody = document.getElementById('notifPanelBody');
+                    const headerBadge = document.getElementById('headerNotifBadge');
+                    const menuBadge = document.getElementById('menuNotifBadge');
+                    
+                    if (!panelBody) return;
+                    panelBody.innerHTML = '';
+
+                    const readGlobalIds = JSON.parse(localStorage.getItem('elor_read_global_notifs') || '[]');
+                    let unreadCount = 0;
+
+                    if (currentNotifications.length === 0) {
+                        panelBody.innerHTML = `<div class="notif-empty">No New updates.</div>`;
+                        headerBadge.style.display = 'none';
+                        menuBadge.style.display = 'none';
+                        return;
+                    }
+
+                    currentNotifications.forEach(n => {
+                        let isUnread = false;
+                        if (n.user_id === null) {
+                            isUnread = !readGlobalIds.includes(n.id);
+                        } else {
+                            isUnread = !n.is_read;
+                        }
+
+                        if (isUnread) unreadCount++;
+
+                        const item = document.createElement('div');
+                        item.className = `notif-item ${isUnread ? 'unread' : ''}`;
+                        
+                        let iconHTML = `<i class="fa-solid fa-bell"></i>`;
+                        if (n.type === 'product') iconHTML = `<img src="logo.png">`;
+                        else if (n.type === 'chat') iconHTML = `<i class="fa-solid fa-comments"></i>`;
+                        else if (n.type === 'order') iconHTML = `<i class="fa-solid fa-receipt"></i>`;
+
+                        item.innerHTML = `
+                            <div class="notif-icon-box">${iconHTML}</div>
+                            <div class="notif-details">
+                                <div class="notif-title">${n.title}</div>
+                                <div class="notif-content">${n.content}</div>
+                                <div class="notif-time">${new Date(n.created_at).toLocaleDateString()}</div>
+                            </div>
+                        `;
+
+                        item.onclick = () => this.handleNotificationItemClick(n.id, n.type, n.target_id, n.user_id === null);
+                        panelBody.appendChild(item);
+                    });
+
+                    if (unreadCount > 0) {
+                        headerBadge.innerText = unreadCount;
+                        headerBadge.style.display = 'flex';
+                        menuBadge.innerText = unreadCount;
+                        menuBadge.style.display = 'flex';
+                    } else {
+                        headerBadge.style.display = 'none';
+                        menuBadge.style.display = 'none';
+                    }
+                },
+                
+                async markSingleNotificationAsRead(notif) {
+                    if (notif.user_id === null) {
+                        const readGlobalIds = JSON.parse(localStorage.getItem('elor_read_global_notifs') || '[]');
+                        if (!readGlobalIds.includes(notif.id)) {
+                            readGlobalIds.push(notif.id);
+                            localStorage.setItem('elor_read_global_notifs', JSON.stringify(readGlobalIds));
+                        }
+                    } else {
+                        if (!notif.is_read) {
+                            await client.from('notifications').update({ is_read: true }).eq('id', notif.id);
+                        }
+                    }
+                    
+                    currentNotifications = currentNotifications.map(n => {
+                        if (n.id === notif.id) return { ...n, is_read: true };
+                        return n;
+                    });
+                    this.renderNotifications();
+                },
+
+                async handleNotificationItemClick(id, type, targetId, isGlobal) {
+                    if (isGlobal) {
+                        const readGlobalIds = JSON.parse(localStorage.getItem('elor_read_global_notifs') || '[]');
+                        if (!readGlobalIds.includes(id)) {
+                            readGlobalIds.push(id);
+                            localStorage.setItem('elor_read_global_notifs', JSON.stringify(readGlobalIds));
+                        }
+                    } else {
+                        await client.from('notifications').update({ is_read: true }).eq('id', id);
+                    }
+
+                    currentNotifications = currentNotifications.map(n => {
+                        if (n.id === id) return { ...n, is_read: true };
+                        return n;
+                    });
+                    
+                    this.renderNotifications();
+                    document.getElementById('notifPanel').classList.remove('active');
+
+                    if (type === 'chat') {
+                        window.location.href = 'orders.html';
+                    } else if (type === 'product' && targetId) {
+                        window.location.href = `product.html?id=${targetId}`;
+                    } else if (type === 'order') {
+                        window.location.href = 'orders.html';
+                    }
+                },
+
+                toggleNotifDropdown(e) {
+                    if (e) e.stopPropagation();
+                    if (!userSession) {
+                        window.location.href = 'auth.html';
+                        return;
+                    }
+                    document.getElementById('notifPanel').classList.toggle('active');
+                },
+
+                setupDropdownCloser() {
+                    document.addEventListener('click', (e) => {
+                        const panel = document.getElementById('notifPanel');
+                        const btn = document.querySelector('.notif-btn');
+                        if (panel && panel.classList.contains('active') && !panel.contains(e.target) && !btn.contains(e.target)) {
+                            panel.classList.remove('active');
+                        }
+                    });
+                },
+
+                clearNotificationBadges() {
+                    document.getElementById('headerNotifBadge').style.display = 'none';
+                    document.getElementById('menuNotifBadge').style.display = 'none';
+                    document.getElementById('notifPanelBody').innerHTML = `<div class="notif-empty">Please sign in to view alerts.</div>`;
+                },
+
+                updateAuthUI() {
+                    const authLink = document.getElementById('authLink');
+                    const menuUserName = document.getElementById('menuUserName');
+
+                    if (userSession) {
+                        authLink.innerHTML = `<i class="fa-solid fa-arrow-right-from-bracket" style="margin-right:10px;"></i> Sign Out`;
+                        const displayName = userSession.user.user_metadata?.full_name || userSession.user.email?.split('@')[0] || 'User';
+                        menuUserName.innerText = displayName;
+                    } else {
+                        authLink.innerHTML = `<i class="fa-regular fa-user" style="margin-right:10px;"></i> Sign In`;
+                        menuUserName.innerText = 'Guest';
+                    }
+                },
+
+                async handleAuthAction() {
+                    this.toggleMenu();
+                    if (userSession) {
+                        await client.auth.signOut();
+                        window.location.reload();
+                    } else window.location.href = 'auth.html';
+                },
+
+                saveHistory(category) {
+                    if (category === 'All' || !category) return;
+                    let hist = JSON.parse(localStorage.getItem('elor_history') || '[]');
+                    hist = hist.filter(c => c !== category); 
+                    hist.push(category);
+                    if (hist.length > 3) hist.shift();
+                    localStorage.setItem('elor_history', JSON.stringify(hist));
+                },
+
+                handleProductClick(id, category) {
+                    this.saveHistory(category);
+                    if (!userSession) window.location.href = 'auth.html';
+                    else window.location.href = `product.html?id=${id}`;
+                },
+
+                triggerAlert(title, text, type="info", confirmCallback=null) {
+                    document.getElementById('gm-title').innerText = title;
+                    document.getElementById('gm-text').innerText = text;
+                    const icon = document.getElementById('gm-icon');
+                    icon.className = type === 'warning' ? 'fa-solid fa-triangle-exclamation gm-icon' : 'fa-solid fa-gem gm-icon';
+                    icon.style.color = type === 'warning' ? 'var(--danger)' : 'var(--accent-gold)';
+
+                    const modal = document.getElementById('glass-modal');
+                    const btnCancel = document.getElementById('gm-cancel');
+                    const btnConfirm = document.getElementById('gm-confirm');
+
+                    if (confirmCallback) {
+                        btnCancel.style.display = 'block';
+                        btnConfirm.innerText = 'Confirm';
+                        btnConfirm.onclick = () => { modal.classList.remove('active'); confirmCallback(); };
+                    } else {
+                        btnCancel.style.display = 'none';
+                        btnConfirm.innerText = 'Understood';
+                        btnConfirm.onclick = this.closeAlert;
+                    }
+                    btnCancel.onclick = this.closeAlert;
+                    modal.classList.add('active');
+                },
+
+                closeAlert() { document.getElementById('glass-modal').classList.remove('active'); },
+                toggleMenu() { document.getElementById('sideDrawer').classList.toggle('active'); document.getElementById('menuOverlay').classList.toggle('active'); },
+
+                setAge(age, index) {
+                    currentAge = age;
+                    document.getElementById('ageGlider').style.transform = `translateX(${index * 100}%)`;
+                    document.querySelectorAll('.age-btn').forEach((b, i) => b.classList.toggle('active', i === index));
+                    this.render();
+                },
+
+                setCategory(cat, el) {
+                    currentCat = cat;
+                    document.querySelectorAll('.cat-item').forEach(i => i.classList.remove('active'));
+                    el.classList.add('active');
+                    document.getElementById('heroTitle').innerText = (cat === 'All') ? "The Collection" : `The ${cat} Collection`;
+                    this.render();
+                },
+
+                render() {
+                    if (!allProducts || allProducts.length === 0) return;
+
+                    const topGrid = document.getElementById('topGrid');
+                    const sliderGrid = document.getElementById('sliderGrid');
+                    const personalGrid = document.getElementById('personalGrid');
+                    const moreGrid = document.getElementById('moreGrid');
+                    
+                    topGrid.innerHTML = ''; sliderGrid.innerHTML = ''; personalGrid.innerHTML = ''; moreGrid.innerHTML = '';
+                    
+                    let filtered = allProducts.filter(p => {
+                        const ageMatch = (currentAge === 'All' || p.style_group === currentAge);
+                        const catMatch = (currentCat === 'All' || p.category === currentCat);
+                        return ageMatch && catMatch;
+                    });
+
+                    if (filtered.length === 0) {
+                        topGrid.innerHTML = `<p style="grid-column: 1/-1; padding:80px; text-align:center; color:#555;">No items found.</p>`;
+                        document.getElementById('sliderWrapper').style.display = 'none';
+                        document.getElementById('personalWrapper').style.display = 'none';
+                        document.getElementById('moreWrapper').style.display = 'none';
+                        return;
+                    }
+
+                    let workingPool = [...filtered];
+
+                    document.getElementById('sliderWrapper').style.display = 'block';
+                    const newArrivals = workingPool.slice(0, 4); 
+                    newArrivals.forEach(p => sliderGrid.innerHTML += createCardHTML(p, false));
+                    workingPool = workingPool.filter(p => !newArrivals.find(n => n.id === p.id));
+
+                    const hist = JSON.parse(localStorage.getItem('elor_history') || '[]');
+                    let personalItems = [];
+                    const pTitle = document.getElementById('personalTitle');
+                    
+                    if (hist.length > 0) {
+                        pTitle.innerHTML = `Made <span>For You</span>`;
+                        let matches = workingPool.filter(p => hist.includes(p.category));
+                        matches = shuffleArray(matches);
+                        personalItems = matches.slice(0, 2);
+                        
+                        if (personalItems.length < 2) {
+                            let remain = shuffleArray(workingPool.filter(p => !personalItems.includes(p)));
+                            personalItems = [...personalItems, ...remain.slice(0, 2 - personalItems.length)];
+                        }
+                    } else {
+                        pTitle.innerHTML = `Suggested <span>For You</span>`;
+                        workingPool = shuffleArray(workingPool);
+                        personalItems = workingPool.slice(0, 2);
+                    }
+
+                    if (personalItems.length > 0) {
+                        document.getElementById('personalWrapper').style.display = 'block';
+                        personalItems.forEach(p => personalGrid.innerHTML += createCardHTML(p, false));
+                        workingPool = workingPool.filter(p => !personalItems.find(n => n.id === p.id));
+                    } else {
+                        document.getElementById('personalWrapper').style.display = 'none';
+                    }
+
+                    workingPool = shuffleArray(workingPool);
+                    const topItems = workingPool.slice(0, 6);
+                    topItems.forEach(p => topGrid.innerHTML += createCardHTML(p, true));
+                    workingPool = workingPool.slice(6);
+
+                    infiniteScrollPool = workingPool;
+                    currentDisplayCount = 0;
+                    
+                    if(infiniteScrollPool.length > 0) {
+                        document.getElementById('moreWrapper').style.display = 'block';
+                        this.loadMoreItems(INITIAL_BATCH - 12);
+                    } else {
+                        document.getElementById('moreWrapper').style.display = 'none';
+                    }
+                },
+
+                loadMoreItems(count) {
+                    if (currentDisplayCount >= infiniteScrollPool.length) return;
+                    
+                    const moreGrid = document.getElementById('moreGrid');
+                    const toLoad = infiniteScrollPool.slice(currentDisplayCount, currentDisplayCount + count);
+                    
+                    toLoad.forEach(p => moreGrid.innerHTML += createCardHTML(p, false));
+                    currentDisplayCount += toLoad.length;
+
+                    if (currentDisplayCount >= infiniteScrollPool.length) {
+                        document.getElementById('scrollLoader').style.display = 'none';
+                    }
+                },
+
+                setupScrollObserver() {
+                    const observer = new IntersectionObserver((entries) => {
+                        if (entries[0].isIntersecting && currentDisplayCount < infiniteScrollPool.length) {
+                            document.getElementById('scrollLoader').style.display = 'block';
+                            setTimeout(() => {
+                                this.loadMoreItems(SCROLL_BATCH);
+                            }, 500);
+                        } else {
+                            document.getElementById('scrollLoader').style.display = 'none';
+                        }
+                    }, { rootMargin: '100px' });
+                    
+                    observer.observe(document.getElementById('scrollLoader'));
+                }
+            };
+        })();
+
+        document.addEventListener('DOMContentLoaded', () => ELOR.init());
+    </script>
+
+    <!-- SERVICE WORKER -->
+    <script>
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('/sw.js')
+            .then((reg) => console.log("ELOR Concierge Active at scope:", reg.scope))
+            .catch(err => console.log("SW Error:", err));
+        });
+    }
+    </script>
+</body>
+</html>

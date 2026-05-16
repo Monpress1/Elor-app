@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ELOR | Authentication</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600&family=Playfair+Display:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <style>
+        :root {
+            /* LUXURY COLOR PALETTE */
+            --bg-deep: #0a0a0a;          
+            --bg-card: #121212;          
+            --accent-gold: #D4AF37;      
+            --accent-gold-soft: rgba(212, 175, 55, 0.2);
+            --text-main: #F8F8FF;        
+            --text-muted: #888888;       
+            --error-red: #ff4c4c;
+            
+            /* DESIGN TOKENS */
+            --font-serif: 'Playfair Display', serif;
+            --font-sans: 'Montserrat', sans-serif;
+            --transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        
+        body { 
+            background-color: var(--bg-deep); 
+            color: var(--text-main); 
+            font-family: var(--font-sans); 
+            overflow-x: hidden; 
+            line-height: 1.5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        /* --- AUTH CONTAINER --- */
+        .auth-wrapper {
+            background: var(--bg-card);
+            width: 100%;
+            max-width: 420px;
+            border-radius: 12px;
+            border: 1px solid rgba(255,255,255,0.05);
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+            padding: 40px 30px;
+            position: relative;
+            overflow: hidden;
+            animation: slideUp 0.6s ease forwards;
+        }
+
+        @keyframes slideUp { 
+            from { opacity: 0; transform: translateY(20px); } 
+            to { opacity: 1; transform: translateY(0); } 
+        }
+
+        /* --- BRANDING --- */
+        .brand-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .logo-img {
+            max-width: 120px;
+            height: auto;
+            margin-bottom: 10px;
+        }
+        /* Fallback styling if elor.png doesn't load immediately */
+        .logo-text {
+            font-family: var(--font-serif);
+            font-size: 2rem;
+            color: var(--accent-gold);
+            letter-spacing: 5px;
+            font-weight: 700;
+            display: none; /* Hidden by default, shown if no image */
+        }
+
+        /* --- TAB NAVIGATION --- */
+        .tab-nav {
+            display: flex;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            margin-bottom: 30px;
+        }
+        .tab-btn {
+            flex: 1;
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-family: var(--font-sans);
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            padding: 12px 0;
+            cursor: pointer;
+            transition: var(--transition);
+            position: relative;
+        }
+        .tab-btn::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: var(--accent-gold);
+            transform: scaleX(0);
+            transition: transform 0.3s ease;
+        }
+        .tab-btn.active { color: var(--text-main); font-weight: 500; }
+        .tab-btn.active::after { transform: scaleX(1); }
+
+        /* --- FORMS --- */
+        .form-view { display: none; animation: fadeIn 0.4s ease forwards; }
+        .form-view.active { display: block; }
+
+        .input-group { margin-bottom: 20px; position: relative; }
+        
+        .name-row { display: flex; gap: 15px; }
+        .name-row .input-group { flex: 1; }
+
+        label {
+            display: block;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        input {
+            width: 100%;
+            background: rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,255,255,0.1);
+            padding: 14px 15px;
+            color: var(--text-main);
+            font-family: var(--font-sans);
+            font-size: 0.9rem;
+            border-radius: 6px;
+            transition: var(--transition);
+        }
+        /* Style date input placeholder color to match */
+        input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(1); opacity: 0.5; cursor: pointer; }
+
+        input:focus {
+            outline: none;
+            border-color: var(--accent-gold);
+            background: rgba(212, 175, 55, 0.05);
+        }
+
+        /* --- BUTTONS & ALERTS --- */
+        .submit-btn {
+            width: 100%;
+            padding: 15px;
+            background: var(--accent-gold);
+            color: var(--bg-deep);
+            border: none;
+            border-radius: 6px;
+            font-family: var(--font-sans);
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            cursor: pointer;
+            transition: var(--transition);
+            margin-top: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+        }
+        .submit-btn:hover { background: #b5952f; box-shadow: 0 0 15px var(--accent-gold-soft); }
+        .submit-btn:disabled { opacity: 0.7; cursor: not-allowed; }
+
+        .forgot-link {
+            display: block;
+            text-align: center;
+            margin-top: 20px;
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            text-decoration: none;
+            transition: 0.3s;
+        }
+        .forgot-link:hover { color: var(--accent-gold); }
+
+        .alert-box {
+            padding: 12px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            text-align: center;
+            margin-bottom: 20px;
+            display: none;
+        }
+        .alert-error { background: rgba(255, 76, 76, 0.1); border: 1px solid var(--error-red); color: #ffb3b3; }
+        .alert-success { background: rgba(46, 213, 115, 0.1); border: 1px solid #2ed573; color: #a4f4c4; }
+
+        .back-nav {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: var(--text-muted);
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .back-nav:hover { color: var(--accent-gold); }
+    </style>
+</head>
+<body>
+
+    <div class="auth-wrapper">
+        <i class="fa-solid fa-arrow-left back-nav" onclick="window.location.href='index.html'" title="Return to Store"></i>
+
+        <div class="brand-header">
+            <img src="elor.png" alt="ELOR" class="logo-img" onerror="this.style.display='none'; document.getElementById('textLogo').style.display='block';">
+            <div class="logo-text" id="textLogo">ELOR</div>
+        </div>
+
+        <div id="alertBox" class="alert-box"></div>
+
+        <div class="tab-nav">
+            <button class="tab-btn" id="tabSignIn" onclick="ElorAuth.switchView('signin')">Sign In</button>
+            <button class="tab-btn" id="tabSignUp" onclick="ElorAuth.switchView('signup')">Sign Up</button>
+        </div>
+
+        <form id="signInForm" class="form-view" onsubmit="ElorAuth.handleSignIn(event)">
+            <div class="input-group">
+                <label>Email Address</label>
+                <input type="email" id="si_email" required autocomplete="email">
+            </div>
+            <div class="input-group">
+                <label>Password</label>
+                <input type="password" id="si_password" required autocomplete="current-password">
+            </div>
+            <button type="submit" class="submit-btn" id="btnSignIn">
+                Sign In
+            </button>
+            <a href="#" class="forgot-link">Forgotten your password?</a>
+        </form>
+
+        <form id="signUpForm" class="form-view" onsubmit="ElorAuth.handleSignUp(event)">
+            <div class="name-row">
+                <div class="input-group">
+                    <label>First Name</label>
+                    <input type="text" id="su_fname" required autocomplete="given-name">
+                </div>
+                <div class="input-group">
+                    <label>Last Name</label>
+                    <input type="text" id="su_lname" required autocomplete="family-name">
+                </div>
+            </div>
+            <div class="input-group">
+                <label>Email Address</label>
+                <input type="email" id="su_email" required autocomplete="email">
+            </div>
+            <div class="input-group">
+                <label>Date of Birth</label>
+                <input type="date" id="su_dob" required>
+            </div>
+            <div class="input-group">
+                <label>Password</label>
+                <input type="password" id="su_password" required minlength="6" autocomplete="new-password">
+            </div>
+            <button type="submit" class="submit-btn" id="btnSignUp">
+                Create Account
+            </button>
+        </form>
+    </div>
+
+    <script>
+        /**
+         * ELOR AUTHENTICATION MODULE
+         */
+        const ElorAuth = (function() {
+            
+            // --- DATABASE CREDENTIALS ---
+            const DB_URL = 'https://lxtoxjhcdtzuxyirzxpc.supabase.co';
+            const DB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx4dG94amhjZHR6dXh5aXJ6eHBjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwMDU4OTAsImV4cCI6MjA5MTU4MTg5MH0.F5lDJVYUF4aEq8DwkafoWy56I_K6ccpkXiarBJk1LAo';
+            const client = window.supabase.createClient(DB_URL, DB_KEY);
+
+            // DOM Elements
+            const alertBox = document.getElementById('alertBox');
+            const btnSignIn = document.getElementById('btnSignIn');
+            const btnSignUp = document.getElementById('btnSignUp');
+
+            const showAlert = (message, type) => {
+                alertBox.className = `alert-box alert-${type}`;
+                alertBox.innerText = message;
+                alertBox.style.display = 'block';
+                // Auto hide after 5 seconds
+                setTimeout(() => { alertBox.style.display = 'none'; }, 5000);
+            };
+
+            const toggleLoading = (button, isLoading, text) => {
+                if (isLoading) {
+                    button.disabled = true;
+                    button.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Processing...';
+                } else {
+                    button.disabled = false;
+                    button.innerHTML = text;
+                }
+            };
+
+            return {
+                init() {
+                    // Check if returning user
+                    const isReturning = localStorage.getItem('elor_returning_user');
+                    if (isReturning === 'true') {
+                        this.switchView('signin');
+                    } else {
+                        this.switchView('signup');
+                    }
+                },
+
+                switchView(view) {
+                    // Reset alerts
+                    alertBox.style.display = 'none';
+
+                    const isSignIn = view === 'signin';
+                    
+                    // Toggle Tabs
+                    document.getElementById('tabSignIn').classList.toggle('active', isSignIn);
+                    document.getElementById('tabSignUp').classList.toggle('active', !isSignIn);
+                    
+                    // Toggle Forms
+                    document.getElementById('signInForm').classList.toggle('active', isSignIn);
+                    document.getElementById('signUpForm').classList.toggle('active', !isSignIn);
+                },
+
+                async handleSignIn(e) {
+                    e.preventDefault();
+                    const email = document.getElementById('si_email').value;
+                    const password = document.getElementById('si_password').value;
+
+                    toggleLoading(btnSignIn, true, 'Sign In');
+
+                    try {
+                        const { data, error } = await client.auth.signInWithPassword({ email, password });
+                        
+                        if (error) throw error;
+
+                        // Success
+                        localStorage.setItem('elor_returning_user', 'true');
+                        window.location.href = 'index.html'; // Redirect back to store
+                        
+                    } catch (error) {
+                        showAlert(error.message || 'Failed to sign in. Please check your credentials.', 'error');
+                        toggleLoading(btnSignIn, false, 'Sign In');
+                    }
+                },
+
+                async handleSignUp(e) {
+                    e.preventDefault();
+                    const fName = document.getElementById('su_fname').value;
+                    const lName = document.getElementById('su_lname').value;
+                    const email = document.getElementById('su_email').value;
+                    const dob = document.getElementById('su_dob').value;
+                    const password = document.getElementById('su_password').value;
+
+                    toggleLoading(btnSignUp, true, 'Create Account');
+
+                    try {
+                        const { data, error } = await client.auth.signUp({
+                            email: email,
+                            password: password,
+                            options: {
+                                data: {
+                                    first_name: fName,
+                                    last_name: lName,
+                                    date_of_birth: dob
+                                }
+                            }
+                        });
+
+                        if (error) throw error;
+
+                        // Success Handling
+                        showAlert('Account created successfully! Redirecting...', 'success');
+                        localStorage.setItem('elor_returning_user', 'true');
+                        
+                        setTimeout(() => {
+                            window.location.href = 'index.html';
+                        }, 1500);
+
+                    } catch (error) {
+                        showAlert(error.message || 'An error occurred during registration.', 'error');
+                        toggleLoading(btnSignUp, false, 'Create Account');
+                    }
+                }
+            };
+        })();
+
+        // Boot up
+        document.addEventListener('DOMContentLoaded', () => ElorAuth.init());
+    </script>
+</body>
+</html>

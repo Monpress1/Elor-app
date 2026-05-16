@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>About ELOR | High-End Native Attire</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        :root {
+            var(--bg-deep): #050505;          
+            --bg-card: #121212;          
+            --accent-gold: #D4AF37;      
+            --accent-gold-soft: rgba(212, 175, 55, 0.2);
+            --text-main: #F8F8FF;        
+            --text-muted: #888888;       
+            --danger: #ff4c4c;
+            
+            --font-serif: 'Playfair Display', serif;
+            --font-sans: 'Montserrat', sans-serif;
+            --transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body { background-color: #050505; color: var(--text-main); font-family: var(--font-sans); overflow-x: hidden; line-height: 1.6; }
+
+        /* --- HEADER & NAVIGATION (Imported from Index) --- */
+        .header {
+            padding: 12px 20px; display: flex; justify-content: space-between; align-items: center;
+            background: rgba(5, 5, 5, 0.95); backdrop-filter: blur(10px);
+            position: sticky; top: 0; z-index: 1000; border-bottom: 1px solid var(--accent-gold-soft);
+        }
+        .header-center { display: flex; flex-direction: column; align-items: center; }
+        .logo { font-family: var(--font-serif); font-size: 1.8rem; color: var(--accent-gold); letter-spacing: 4px; text-decoration: none; font-weight: 700; line-height: 1; }
+        .fancy-line-header { width: 40px; height: 1.5px; margin-top: 5px; background: linear-gradient(90deg, transparent, var(--accent-gold), transparent); }
+
+        .menu-btn, .cart-btn { font-size: 1.3rem; color: var(--text-main); cursor: pointer; width: 40px; text-align: center; position: relative; text-decoration: none;}
+        
+        /* --- SIDE DRAWER --- */
+        .side-menu {
+            position: fixed; top: 0; left: -100%; width: 80%; height: 100%;
+            background: #050505; z-index: 2000; transition: var(--transition);
+            padding: 60px 30px; border-right: 1px solid var(--accent-gold-soft); display: flex; flex-direction: column;
+        }
+        .side-menu.active { left: 0; }
+        .menu-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1999; display: none; }
+        .menu-overlay.active { display: block; }
+        .menu-link { display: block; font-family: var(--font-serif); font-size: 1.3rem; color: var(--text-main); text-decoration: none; margin-bottom: 25px; transition: 0.3s; letter-spacing: 1px; }
+        .menu-link:hover { color: var(--accent-gold); }
+
+        /* --- ABOUT PAGE SPECIFIC STYLES --- */
+        .about-hero {
+            position: relative;
+            padding: 80px 20px;
+            text-align: center;
+            background: linear-gradient(to bottom, rgba(5,5,5,0.2), #050505), url('https://images.unsplash.com/photo-1593030761757-71fae45fa0e7?q=80&w=2080&auto=format&fit=crop') center/cover;
+            border-bottom: 1px solid var(--accent-gold-soft);
+        }
+        
+        .about-hero h1 {
+            font-family: var(--font-serif);
+            font-size: 2.5rem;
+            color: var(--accent-gold);
+            font-weight: 600;
+            margin-bottom: 15px;
+            letter-spacing: 2px;
+        }
+
+        .about-hero p {
+            font-size: 0.9rem;
+            color: #fff;
+            text-transform: uppercase;
+            letter-spacing: 4px;
+            font-weight: 300;
+        }
+
+        .content-section {
+            padding: 50px 20px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .section-title {
+            font-family: var(--font-serif);
+            font-size: 1.8rem;
+            text-align: center;
+            margin-bottom: 30px;
+            color: var(--text-main);
+            font-weight: 400;
+        }
+
+        .section-title span {
+            color: var(--accent-gold);
+            font-style: italic;
+        }
+
+        .text-block {
+            font-size: 0.95rem;
+            color: var(--text-muted);
+            margin-bottom: 25px;
+            text-align: justify;
+            font-weight: 300;
+        }
+
+        .text-block strong {
+            color: var(--text-main);
+            font-weight: 500;
+        }
+
+        .quote-block {
+            padding: 40px 20px;
+            margin: 40px 0;
+            text-align: center;
+            background: var(--bg-card);
+            border-left: 2px solid var(--accent-gold);
+            border-right: 2px solid var(--accent-gold);
+            border-radius: 8px;
+            position: relative;
+        }
+
+        .quote-block i {
+            font-size: 2rem;
+            color: var(--accent-gold-soft);
+            margin-bottom: 15px;
+        }
+
+        .quote-text {
+            font-family: var(--font-serif);
+            font-size: 1.4rem;
+            color: var(--accent-gold);
+            font-style: italic;
+            line-height: 1.4;
+        }
+
+        .values-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 30px;
+            margin-top: 40px;
+        }
+
+        @media (min-width: 768px) {
+            .values-grid { grid-template-columns: repeat(3, 1fr); }
+        }
+
+        .value-card {
+            background: var(--bg-card);
+            border: 1px solid rgba(255,255,255,0.04);
+            padding: 30px 20px;
+            border-radius: 8px;
+            text-align: center;
+            transition: var(--transition);
+        }
+
+        .value-card:hover {
+            border-color: var(--accent-gold-soft);
+            transform: translateY(-5px);
+        }
+
+        .value-icon {
+            font-size: 2rem;
+            color: var(--accent-gold);
+            margin-bottom: 15px;
+        }
+
+        .value-title {
+            font-family: var(--font-serif);
+            font-size: 1.2rem;
+            color: var(--text-main);
+            margin-bottom: 10px;
+        }
+
+        .value-text {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .cta-section {
+            text-align: center;
+            padding: 60px 20px;
+            background: linear-gradient(0deg, #000 0%, #050505 100%);
+            border-top: 1px solid var(--accent-gold-soft);
+        }
+
+        .btn-primary {
+            display: inline-block;
+            padding: 15px 35px;
+            background: transparent;
+            border: 1px solid var(--accent-gold);
+            color: var(--accent-gold);
+            font-family: var(--font-sans);
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: var(--transition);
+            border-radius: 4px;
+            margin-top: 20px;
+        }
+
+        .btn-primary:hover {
+            background: var(--accent-gold);
+            color: #050505;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 20px;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            border-top: 1px solid rgba(255,255,255,0.05);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- OVERLAY & SIDE MENU -->
+    <div class="menu-overlay" id="menuOverlay" onclick="toggleMenu()"></div>
+    <div class="side-menu" id="sideDrawer">
+        <div style="padding-bottom: 5px;">
+            <p style="font-size: 0.65rem; text-transform: uppercase; letter-spacing: 2px; color: var(--text-muted); margin-bottom: 5px;">Hello</p>
+            <h2 style="font-family: var(--font-serif); font-size: 1.6rem; color: var(--accent-gold); font-weight: 600;">Welcome back</h2>
+        </div>
+        
+        <div style="height: 1.5px; width: 100%; background: linear-gradient(90deg, var(--accent-gold) 0%, transparent 85%); margin: 20px 0 35px 0; opacity: 0.6;"></div>
+
+        <a href="index.html" class="menu-link"><i class="fa-solid fa-store" style="margin-right:10px; font-size: 1rem; color: var(--accent-gold);"></i> Storefront</a>
+        <a href="orders.html" class="menu-link"><i class="fa-solid fa-box-open" style="margin-right:10px; font-size: 1rem; color: var(--accent-gold);"></i> Orders</a>
+        <a href="account.html" class="menu-link"><i class="fa-regular fa-user" style="margin-right:10px; font-size: 1rem; color: var(--accent-gold);"></i> Account</a>
+        <a href="About.html" class="menu-link" style="color: var(--accent-gold);"><i class="fa-solid fa-circle-info" style="margin-right:10px; font-size: 1rem; color: var(--accent-gold);"></i> About ELOR</a>
+        <a href="contact.html" class="menu-link"><i class="fa-solid fa-headset" style="margin-right:10px; font-size: 1rem; color: var(--accent-gold);"></i> Support</a>
+    </div>
+
+    <!-- HEADER -->
+    <header class="header">
+        <div class="menu-btn" onclick="toggleMenu()"><i class="fa-solid fa-bars-staggered"></i></div>
+        <div class="header-center">
+            <a href="index.html" class="logo">ELOR</a>
+            <div class="fancy-line-header"></div>
+        </div>
+        <a href="index.html" class="cart-btn">
+            <i class="fa-solid fa-arrow-left"></i>
+        </a>
+    </header>
+
+    <!-- HERO SECTION -->
+    <section class="about-hero">
+        <h1>Our Heritage</h1>
+        <p>Redefining Native Luxury</p>
+    </section>
+
+    <!-- MAIN STORY -->
+    <section class="content-section">
+        <h2 class="section-title">The <span>ELOR</span> Philosophy</h2>
+        <p class="text-block">
+            At <strong>ELOR</strong>, we believe that clothing is more than just fabric—it is an unspoken language of power, culture, and respect. Born from a deep appreciation for the rich sartorial traditions of Africa, we have dedicated ourselves to crafting high-end native attire for the modern gentleman. 
+        </p>
+        <p class="text-block">
+            Whether it is the commanding drape of a well-tailored Agbada, the sharp precision of a Senator suit, or the effortless grace of a Kaftan, every piece in our collection is designed to make a statement before you even utter a word. We source only the finest fabrics, ensuring that our garments feel as luxurious as they look.
+        </p>
+
+        <div class="quote-block">
+            <i class="fa-solid fa-quote-left"></i>
+            <p class="quote-text">"Elegance is not about being noticed, it's about being remembered. We sew confidence into every seam."</p>
+        </div>
+
+        <h2 class="section-title">Uncompromising <span>Craftsmanship</span></h2>
+        <p class="text-block" style="text-align: center;">
+            Luxury requires patience. Every ELOR garment is made-to-order, meticulously cut and stitched by master tailors. Our signature <strong>7 to 14-day delivery promise</strong> ensures that perfection is never rushed, yet always arrives right when you need it.
+        </p>
+
+        <div class="values-grid">
+            <div class="value-card">
+                <i class="fa-solid fa-scissors value-icon"></i>
+                <h3 class="value-title">Bespoke Tailoring</h3>
+                <p class="value-text">Every stitch is intentional. We blend traditional techniques with modern precision to guarantee a flawless silhouette.</p>
+            </div>
+            <div class="value-card">
+                <i class="fa-solid fa-crown value-icon"></i>
+                <h3 class="value-title">Premium Materials</h3>
+                <p class="value-text">From pure Italian wools and rich Atiku fabrics to imported cashmeres, we settle for nothing less than absolute luxury.</p>
+            </div>
+            <div class="value-card">
+                <i class="fa-solid fa-hourglass-half value-icon"></i>
+                <h3 class="value-title">Timeless Appeal</h3>
+                <p class="value-text">Trends fade, but true style remains. Our designs are crafted to look just as majestic today as they will in a decade.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- CALL TO ACTION -->
+    <section class="cta-section">
+        <h2 class="section-title" style="margin-bottom: 10px;">Ready to Elevate <span>Your Wardrobe?</span></h2>
+        <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 20px;">Experience the pinnacle of native menswear.</p>
+        <a href="index.html" class="btn-primary">Explore The Collection</a>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="footer">
+        <p>&copy; 2026 ELOR High-End Native Attire. All Rights Reserved.</p>
+    </footer>
+
+    <!-- SCRIPT FOR UI TOGGLES -->
+    <script>
+        function toggleMenu() {
+            document.getElementById('sideDrawer').classList.toggle('active');
+            document.getElementById('menuOverlay').classList.toggle('active');
+        }
+    </script>
+</body>
+</html>

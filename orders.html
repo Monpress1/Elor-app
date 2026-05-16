@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ELOR | My Atelier Profile</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600&family=Playfair+Display:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <style>
+        :root {
+            --bg: #0a0a0a;
+            --surface: #121212;
+            --gold: #C5A059;
+            --gold-dim: rgba(197, 160, 89, 0.15);
+            --text: #F5F5F5;
+            --text-muted: #888888;
+            --border: rgba(197, 160, 89, 0.15);
+            --danger: #ff4c4c;
+            --font-serif: 'Playfair Display', serif;
+            --font-sans: 'Montserrat', sans-serif;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            font-family: var(--font-sans);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        .container { max-width: 800px; margin: 0 auto; padding: 20px; padding-bottom: 100px; }
+
+        /* --- HEADER --- */
+        header { padding: 40px 0; text-align: center; }
+        header h1 { font-family: var(--font-serif); font-size: 2.2rem; color: var(--gold); letter-spacing: 3px; text-transform: uppercase; }
+        header p { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 3px; color: var(--text-muted); margin-top: 10px; }
+
+        /* --- TABS --- */
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 30px;
+            gap: 25px;
+        }
+        .tab-btn {
+            padding: 15px 5px;
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-family: var(--font-sans);
+            font-weight: 600;
+            font-size: 0.8rem;
+            cursor: pointer;
+            position: relative;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            transition: 0.4s;
+        }
+        .tab-btn.active { color: var(--gold); }
+        .tab-btn.active::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: var(--gold);
+        }
+
+        /* TAB PULSE NOTIFICATION */
+        @keyframes tabNotify {
+            0% { text-shadow: 0 0 0px transparent; color: var(--text-muted); }
+            50% { text-shadow: 0 0 10px var(--danger); color: var(--danger); }
+            100% { text-shadow: 0 0 0px transparent; color: var(--text-muted); }
+        }
+        .tab-btn.notify { animation: tabNotify 2s infinite ease-in-out; }
+
+        /* --- CARDS --- */
+        .order-list { display: flex; flex-direction: column; gap: 18px; min-height: 300px; }
+        
+        .order-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 15px;
+            padding: 18px;
+            display: flex;
+            gap: 18px;
+            align-items: center;
+            transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+            position: relative;
+            animation: slideUp 0.5s ease-out forwards;
+        }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+        .order-card.has-unread { border-color: rgba(255, 76, 76, 0.4); box-shadow: 0 0 15px rgba(255, 76, 76, 0.1); }
+
+        .product-img {
+            width: 85px;
+            height: 110px;
+            object-fit: cover;
+            border-radius: 10px;
+            background: #1a1a1a;
+            border: 1px solid rgba(255,255,255,0.03);
+        }
+
+        .order-details { flex: 1; min-width: 0; }
+        .order-details h3 { font-family: var(--font-serif); font-size: 1.15rem; margin-bottom: 5px; color: #fff; }
+        .order-meta { font-size: 0.75rem; color: var(--text-muted); margin-bottom: 12px; font-weight: 400; }
+        
+        .status-tag {
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            font-weight: 700;
+            letter-spacing: 1px;
+            padding: 5px 12px;
+            border-radius: 30px;
+            background: var(--gold-dim);
+            color: var(--gold);
+            display: inline-block;
+        }
+        /* Color Mapping */
+        .status-tag[data-status="delivered"] { background: rgba(0, 255, 127, 0.1); color: #00ff7f; }
+        .status-tag[data-status="shipping"] { background: rgba(0, 191, 255, 0.1); color: #00bfff; }
+        .status-tag[data-status="packaging"] { background: rgba(255, 165, 0, 0.1); color: #ffa500; }
+
+        .card-actions { display: flex; align-items: center; gap: 15px; }
+
+        .chat-trigger {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: var(--gold-dim);
+            color: var(--gold);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: 0.3s;
+            border: 1px solid var(--border);
+            position: relative;
+        }
+        .chat-trigger:hover { background: var(--gold); color: #000; transform: scale(1.05); }
+        
+        /* PULSATING UNREAD DOT */
+        .unread-dot {
+            position: absolute;
+            top: -2px;
+            right: -2px;
+            width: 14px;
+            height: 14px;
+            background: var(--danger);
+            border: 2px solid var(--surface);
+            border-radius: 50%;
+            box-shadow: 0 0 10px rgba(255, 76, 76, 0.6);
+            animation: pulseDot 1.5s infinite;
+        }
+        @keyframes pulseDot { 0% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.3); opacity: 0.8; } 100% { transform: scale(1); opacity: 1; } }
+
+        .delete-btn {
+            color: var(--text-muted);
+            padding: 10px;
+            cursor: pointer;
+            font-size: 1.2rem;
+            transition: 0.3s;
+        }
+        .delete-btn:hover { color: var(--danger); transform: scale(1.1); }
+
+        /* --- CHAT MODAL --- */
+        .chat-modal {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.98);
+            z-index: 2000;
+            display: none;
+            flex-direction: column;
+            backdrop-filter: blur(15px);
+        }
+        .chat-modal.active { display: flex; }
+
+        .chat-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--surface);
+        }
+
+        #chatMessages {
+            flex: 1;
+            padding: 25px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            background: transparent;
+        }
+
+        .msg {
+            max-width: 80%;
+            padding: 14px 20px;
+            border-radius: 20px;
+            font-size: 0.92rem;
+            line-height: 1.4;
+            position: relative;
+        }
+        .msg.admin { align-self: flex-start; background: #1a1a1a; color: #fff; border-bottom-left-radius: 4px; border: 1px solid rgba(255,255,255,0.05); }
+        .msg.user { align-self: flex-end; background: var(--gold); color: #000; font-weight: 600; border-bottom-right-radius: 4px; }
+        .msg-time { display: block; font-size: 0.65rem; margin-top: 6px; opacity: 0.6; }
+
+        .chat-input-area {
+            padding: 20px;
+            padding-bottom: calc(25px + env(safe-area-inset-bottom));
+            border-top: 1px solid var(--border);
+            display: flex;
+            gap: 15px;
+            background: var(--surface);
+        }
+        .chat-input-area input {
+            flex: 1;
+            background: #000;
+            border: 1px solid var(--border);
+            padding: 16px 25px;
+            border-radius: 35px;
+            color: #fff;
+            outline: none;
+            font-family: var(--font-sans);
+            font-size: 0.95rem;
+        }
+
+        /* --- CUSTOM ALERT MODAL --- */
+        .custom-alert-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.9); backdrop-filter: blur(8px);
+            display: flex; align-items: center; justify-content: center;
+            z-index: 3000; display: none;
+        }
+        .custom-alert-box {
+            background: #111; border: 1px solid var(--gold); border-radius: 15px;
+            padding: 35px 30px; max-width: 350px; width: 85%; text-align: center;
+            box-shadow: 0 15px 50px rgba(0,0,0,0.5);
+        }
+        .custom-alert-box i { font-size: 3rem; color: var(--gold); margin-bottom: 20px; }
+        .custom-alert-box p { color: #fff; margin-bottom: 30px; font-family: var(--font-sans); font-size: 1rem; }
+        .custom-alert-btns { display: flex; gap: 15px; }
+        .btn-gold { background: var(--gold); color: #000; border: none; padding: 12px 25px; border-radius: 8px; font-weight: 700; cursor: pointer; flex: 1; text-transform: uppercase; font-size: 0.8rem; }
+        .btn-outline { background: transparent; color: var(--gold); border: 1px solid var(--gold); padding: 12px 25px; border-radius: 8px; font-weight: 700; cursor: pointer; flex: 1; text-transform: uppercase; font-size: 0.8rem; }
+
+        /* EMPTY STATE */
+        .empty-state { text-align: center; padding: 100px 20px; color: var(--text-muted); }
+        .empty-state i { font-size: 4.5rem; margin-bottom: 25px; color: var(--gold); opacity: 0.3; }
+        .empty-state p { font-size: 1rem; letter-spacing: 1px; }
+
+        /* LOADING */
+        .lazy-loader { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: var(--gold); gap: 15px; }
+        .spinner { width: 40px; height: 40px; border: 3px solid var(--gold-dim); border-top: 3px solid var(--gold); border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+        
+        .mini-badge {
+    font-size: 0.62rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    padding: 4px 8px;
+    border-radius: 999px;
+    font-weight: 700;
+    display: inline-block;
+}
+
+.mini-badge-new {
+    background: rgba(255, 76, 76, 0.12);
+    color: #ff4c4c;
+    border: 1px solid rgba(255, 76, 76, 0.25);
+}
+
+.mini-badge-status {
+    background: rgba(0, 191, 255, 0.12);
+    color: #00bfff;
+    border: 1px solid rgba(0, 191, 255, 0.25);
+}
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <h1>My Atelier</h1>
+            <p>Bespoke Collection</p>
+        </header>
+
+        <div class="tabs">
+            <button class="tab-btn active" id="tab-orders" onclick="switchTab('orders')">Orders</button>
+            <button class="tab-btn" id="tab-interests" onclick="switchTab('interests')">Interests</button>
+        </div>
+
+        <div id="contentArea" class="order-list">
+            </div>
+    </div>
+
+    <div class="chat-modal" id="chatModal">
+        <div class="chat-header">
+            <div>
+                <h3 id="chatProductName" style="font-family: var(--font-serif); color: var(--gold);">Stylist Chat</h3>
+                <small style="color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px;">ELOR Concierge</small>
+            </div>
+            <button onclick="closeChat()" style="background:none; border:none; color:var(--text); font-size:1.8rem; cursor:pointer;">
+                <i class="fa fa-times"></i>
+            </button>
+        </div>
+        <div id="chatMessages"></div>
+        <form class="chat-input-area" onsubmit="sendMessage(event)">
+            <input type="text" id="chatInputField" placeholder="Message your stylist..." autocomplete="off">
+            <button type="submit" class="chat-trigger" style="width:55px; height:55px; background:var(--gold); color:#000; border:none;">
+                <i class="fa fa-paper-plane"></i>
+            </button>
+        </form>
+    </div>
+
+    <div class="custom-alert-overlay" id="alertOverlay">
+        <div class="custom-alert-box">
+            <i class="fa-solid fa-box-open"></i>
+            <p id="alertMsg">Are you sure?</p>
+            <div class="custom-alert-btns">
+                <button class="btn-outline" onclick="closeAlert()">Cancel</button>
+                <button class="btn-gold" id="confirmBtn">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://lxtoxjhcdtzuxyirzxpc.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx4dG94amhjZHR6dXh5aXJ6eHBjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwMDU4OTAsImV4cCI6MjA5MTU4MTg5MH0.F5lDJVYUF4aEq8DwkafoWy56I_K6ccpkXiarBJk1LAo';
+        const client = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        let currentUser = null;
+        let ordersData = [];
+        let interestsData = [];
+        let currentActiveTab = 'orders';
+        let activeChatProduct = null;
+        let chatPoll = null;
+        let unreadCounts = {};
+
+
+
+let latestAdminChatAtByProduct = {};
+let seenState = { chat: {}, status: {} };
+
+function seenKey() {
+    return `elor_seen_state_${currentUser.id}`;
+}
+
+function loadSeenState() {
+    try {
+        return JSON.parse(localStorage.getItem(seenKey())) || { chat: {}, status: {} };
+    } catch {
+        return { chat: {}, status: {} };
+    }
+}
+
+function saveSeenState() {
+    localStorage.setItem(seenKey(), JSON.stringify(seenState));
+}
+
+function markThreadSeen(productId, status, latestAdminChatAt) {
+    if (status) seenState.status[productId] = status;
+    if (latestAdminChatAt) seenState.chat[productId] = latestAdminChatAt;
+    saveSeenState();
+}
+
+        async function init() {
+    const { data: { user } } = await client.auth.getUser();
+    if (!user) return window.location.href = 'auth.html';
+    currentUser = user;
+
+    seenState = loadSeenState();
+
+    // Make sure the user has a profile record so admin sees their name
+    const { data: existingProfile } = await client
+        .from('profiles')
+        .select('id, full_name')
+        .eq('id', user.id)
+        .maybeSingle();
+
+    if (!existingProfile?.full_name) {
+        const displayName =
+            user.user_metadata?.full_name ||
+            user.user_metadata?.name ||
+            user.email?.split('@')[0] ||
+            'Client';
+
+        await client.from('profiles').upsert({
+            id: user.id,
+            full_name: displayName
+        });
+    }
+
+    await loadData();
+    setupRealtime();
+}
+        function setupRealtime() {
+    client.channel('profile-updates')
+        .on('postgres_changes', {
+            event: '*',
+            schema: 'public',
+            table: 'orders',
+            filter: `user_id=eq.${currentUser.id}`
+        }, async () => {
+            await loadData();
+        })
+
+        .on('postgres_changes', {
+            event: '*',
+            schema: 'public',
+            table: 'stylist_chats',
+            filter: `user_id=eq.${currentUser.id}`
+        }, async (payload) => {
+
+            // If admin sent message
+            if (
+                payload.eventType === 'INSERT' &&
+                payload.new.sender === 'admin'
+            ) {
+
+                // Update unread instantly
+                unreadCounts[payload.new.product_id] =
+                    (unreadCounts[payload.new.product_id] || 0) + 1;
+
+                render();
+                updateTabNotifications();
+            }
+
+            // Always refresh latest state
+            await loadData();
+
+            // Refresh open chat instantly
+            if (
+                activeChatProduct &&
+                payload.new.product_id === activeChatProduct
+            ) {
+                fetchMessages();
+            }
+        })
+
+        .subscribe();
+}
+        
+        
+        async function loadData() {
+    try {
+        const [ordersRes, chatsRes] = await Promise.all([
+            client.from('orders')
+                .select('*, products:product_id(*)')
+                .eq('user_id', currentUser.id),
+
+            client.from('stylist_chats')
+                .select('*')
+                .eq('user_id', currentUser.id)
+                .order('created_at', { ascending: false })
+        ]);
+
+        const allOrders = ordersRes.data || [];
+        const allChats = chatsRes.data || [];
+
+        const latestActivity = {};
+        latestAdminChatAtByProduct = {};
+        unreadCounts = {};
+
+        allChats.forEach(c => {
+
+            // Latest activity
+            if (
+                !latestActivity[c.product_id] ||
+                new Date(c.created_at) > new Date(latestActivity[c.product_id])
+            ) {
+                latestActivity[c.product_id] = c.created_at;
+            }
+
+            // Latest admin message + unread counter
+            if (c.sender === 'admin') {
+
+                if (
+                    !latestAdminChatAtByProduct[c.product_id] ||
+                    new Date(c.created_at) > new Date(latestAdminChatAtByProduct[c.product_id])
+                ) {
+                    latestAdminChatAtByProduct[c.product_id] = c.created_at;
+                }
+
+                // Compare with local seen timestamp
+                const seenAt = seenState.chat[c.product_id];
+
+                const isUnread =
+                    !seenAt ||
+                    new Date(c.created_at) > new Date(seenAt);
+
+                if (isUnread) {
+                    unreadCounts[c.product_id] =
+                        (unreadCounts[c.product_id] || 0) + 1;
+                }
+            }
+        });
+
+        ordersData = allOrders.filter(
+            o => o.status && !o.status.toLowerCase().includes('incomplete')
+        );
+
+        const incomplete = allOrders.filter(
+            o => !o.status || o.status.toLowerCase().includes('incomplete')
+        );
+
+        const orderedProductIds = allOrders.map(o => o.product_id);
+
+        const chattedProductIds = [
+            ...new Set(allChats.map(c => c.product_id))
+        ].filter(id => !orderedProductIds.includes(id));
+
+        let inquiries = [];
+
+        if (chattedProductIds.length > 0) {
+            const { data: inquiryProducts } = await client
+                .from('products')
+                .select('*')
+                .in('id', chattedProductIds);
+
+            inquiries = (inquiryProducts || []).map(p => ({
+                product_id: p.id,
+                status: 'Inquiry',
+                created_at: latestActivity[p.id] || p.created_at,
+                products: p,
+                isInquiry: true
+            }));
+        }
+
+        interestsData = [...incomplete, ...inquiries];
+
+        const sortByActivity = (a, b) => {
+            const timeA = latestActivity[a.product_id] || a.created_at;
+            const timeB = latestActivity[b.product_id] || b.created_at;
+
+            return new Date(timeB) - new Date(timeA);
+        };
+
+        ordersData.sort(sortByActivity);
+        interestsData.sort(sortByActivity);
+
+        updateTabNotifications();
+        render();
+
+    } catch (e) {
+        console.error("Load failed", e);
+    }
+}
+        
+          function updateTabNotifications() {
+            const hasUnreadOrders = ordersData.some(o => unreadCounts[o.product_id] > 0);
+            const hasUnreadInterests = interestsData.some(o => unreadCounts[o.product_id] > 0);
+
+            document.getElementById('tab-orders').classList.toggle('notify', hasUnreadOrders);
+            document.getElementById('tab-interests').classList.toggle('notify', hasUnreadInterests);
+        }
+
+        function switchTab(tab) {
+            currentActiveTab = tab;
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(`tab-${tab}`).classList.add('active');
+            render();
+        }
+
+        function render() {
+    const container = document.getElementById('contentArea');
+    const data = currentActiveTab === 'orders' ? ordersData : interestsData;
+
+    if (data.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state">
+                <i class="fa-solid fa-box-open"></i>
+                <p>No pieces found in your archive.</p>
+            </div>`;
+        return;
+    }
+
+    container.innerHTML = data.map(item => {
+        const unread = unreadCounts[item.product_id] > 0;
+        const latestAdminChatAt = latestAdminChatAtByProduct[item.product_id];
+        const seenChatAt = seenState.chat[item.product_id];
+        const seenStatus = seenState.status[item.product_id];
+        const statusChanged = !!(seenStatus && item.status && seenStatus !== item.status);
+
+        const isDelivered = item.status?.toLowerCase() === 'delivered';
+        const canDelete = currentActiveTab === 'interests' || isDelivered;
+
+        return `
+            <div class="order-card ${unread || statusChanged ? 'has-unread' : ''}">
+                <img src="${item.products?.image_url}" class="product-img" onerror="this.src='https://via.placeholder.com/150'">
+                <div class="order-details">
+                    <h3>${item.products?.name || 'Atelier Piece'}</h3>
+                    <div class="order-meta">
+                        ${item.reference ? `Ref: #${item.reference.slice(-6)}` : 'Handmade Inquiry'}<br>
+                        ${new Date(item.created_at).toLocaleDateString()}
+                    </div>
+
+                    <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:4px;">
+                        <span class="status-tag" data-status="${item.status?.toLowerCase()}">${item.status || 'Inquiry'}</span>
+                        ${unread ? `<span class="mini-badge mini-badge-new">New chat</span>` : ''}
+                        ${statusChanged ? `<span class="mini-badge mini-badge-status">Status updated</span>` : ''}
+                    </div>
+                </div>
+
+                <div class="card-actions">
+                    ${canDelete ? `<i class="fa-regular fa-trash-can delete-btn" onclick="triggerDelete('${item.id}', '${item.product_id}', ${currentActiveTab === 'interests'})"></i>` : ''}
+                    <div class="chat-trigger" onclick="openChat('${item.product_id}', '${(item.products?.name || 'Stylist Chat').replace(/'/g, "\\'")}', '${(item.status || '').replace(/'/g, "\\'")}', '${latestAdminChatAt || ''}')">
+                        <i class="fa-regular fa-comment-dots"></i>
+                        ${unread ? '<div class="unread-dot"></div>' : ''}
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+        // --- DELETE SYSTEM ---
+        function triggerDelete(id, productId, isInterest) {
+            const overlay = document.getElementById('alertOverlay');
+            const btn = document.getElementById('confirmBtn');
+            document.getElementById('alertMsg').innerText = "Permanently remove this piece from your atelier view?";
+            
+            overlay.style.display = 'flex';
+            btn.onclick = async () => {
+                if (id && id !== 'undefined') {
+                    await client.from('orders').delete().eq('id', id);
+                } else if (isInterest) {
+                    // Delete chat history to remove inquiry
+                    await client.from('stylist_chats').delete().match({ user_id: currentUser.id, product_id: productId });
+                }
+                closeAlert();
+                loadData();
+            };
+        }
+        function closeAlert() { document.getElementById('alertOverlay').style.display = 'none'; }
+
+        // --- CHAT SYSTEM ---
+async function openChat(productId, productName, status, latestAdminChatAt) {
+    activeChatProduct = productId;
+    document.getElementById('chatProductName').innerText = productName;
+    document.getElementById('chatModal').classList.add('active');
+
+    const msgBox = document.getElementById('chatMessages');
+    msgBox.innerHTML = `<div class="lazy-loader"><div class="spinner"></div></div>`;
+
+    await client.from('stylist_chats')
+        .update({ is_read: true })
+        .match({ user_id: currentUser.id, product_id: productId, sender: 'admin' });
+
+    markThreadSeen(productId, status, latestAdminChatAt);
+
+    fetchMessages();
+    chatPoll = setInterval(fetchMessages, 4000);
+}
+
+        async function fetchMessages() {
+    if (!activeChatProduct) return;
+
+    const { data } = await client
+        .from('stylist_chats')
+        .select('*')
+        .eq('user_id', currentUser.id)
+        .eq('product_id', activeChatProduct)
+        .order('created_at', { ascending: true });
+
+    const box = document.getElementById('chatMessages');
+    const content = (data || []).map(m => `
+        <div class="msg ${m.sender}">
+            ${m.message}
+            <span class="msg-time">${new Date(m.created_at).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</span>
+        </div>
+    `).join('');
+
+    if (box.innerHTML !== content) {
+        box.innerHTML = content || '<div class="empty-state">Begin your bespoke conversation...</div>';
+        box.scrollTop = box.scrollHeight;
+    }
+
+    const latestAdminMsg = [...(data || [])].reverse().find(m => m.sender === 'admin');
+    if (latestAdminMsg) {
+        markThreadSeen(activeChatProduct, null, latestAdminMsg.created_at);
+    }
+}
+
+        async function sendMessage(e) {
+            e.preventDefault();
+            const input = document.getElementById('chatInputField');
+            const val = input.value.trim();
+            if (!val) return;
+            input.value = '';
+
+            await client.from('stylist_chats').insert({ user_id: currentUser.id, product_id: activeChatProduct, message: val, sender: 'user' });
+            fetchMessages();
+        }
+
+        function closeChat() {
+            document.getElementById('chatModal').classList.remove('active');
+            clearInterval(chatPoll);
+            activeChatProduct = null;
+            loadData(); // Clean up dots on close
+        }
+
+        init();
+    </script>
+</body>
+</html>

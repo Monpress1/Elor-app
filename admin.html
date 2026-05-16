@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ELOR | panel Admin</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600&family=Playfair+Display:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <style>
+        :root {
+            --bg-main: #0a0a0a;
+            --bg-surface: #121212;
+            --text-main: #F5F5F5;
+            --text-muted: #888888;
+            --gold: #C5A059;
+            --border-color: rgba(197, 160, 89, 0.15);
+            --danger: #ff4c4c;
+            --success: #2ed573;
+            --info: #3498db;
+            --font-serif: 'Playfair Display', serif;
+            --font-sans: 'Montserrat', sans-serif;
+        }
+
+        body.light-mode {
+            --bg-main: #f8f9fa;
+            --bg-surface: #ffffff;
+            --text-main: #1a1a1a;
+            --text-muted: #666666;
+            --border-color: rgba(0, 0, 0, 0.08);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        
+        body {
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            font-family: var(--font-sans);
+            transition: 0.3s;
+            line-height: 1.6;
+        }
+
+        /* --- LAYOUT (MOBILE FIRST) --- */
+        .app-container { display: flex; min-height: 100vh; }
+
+        /* --- SIDEBAR --- */
+        .sidebar {
+            display: none;
+            background-color: var(--bg-surface);
+            border-right: 1px solid var(--border-color);
+            flex-direction: column;
+            padding: 30px 20px;
+            position: sticky;
+            top: 0;
+            height: 100vh;
+        }
+
+        .brand {
+            font-family: var(--font-serif);
+            color: var(--gold);
+            font-size: 1.8rem;
+            margin-bottom: 40px;
+            text-align: center;
+            letter-spacing: 4px;
+            font-weight: 700;
+        }
+
+        .nav-menu { list-style: none; flex-grow: 1; }
+        .nav-item {
+            padding: 14px 18px;
+            margin-bottom: 8px;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            color: var(--text-muted);
+            transition: 0.3s;
+            font-size: 0.9rem;
+        }
+        .nav-item:hover, .nav-item.active {
+            background-color: rgba(197, 160, 89, 0.1);
+            color: var(--gold);
+        }
+
+        .badge { background: var(--danger); color: #fff; font-size: 0.65rem; padding: 2px 7px; border-radius: 10px; margin-left: auto; display: none; }
+        .badge.active { display: inline-block; }
+
+        /* --- MOBILE BOTTOM NAV --- */
+        .mobile-nav {
+            display: flex;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background: var(--bg-surface);
+            border-top: 1px solid var(--border-color);
+            z-index: 1000;
+            justify-content: space-around;
+            padding: 10px 0;
+            padding-bottom: calc(10px + env(safe-area-inset-bottom));
+        }
+
+        .mobile-nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: var(--text-muted);
+            font-size: 0.65rem;
+            gap: 4px;
+            text-decoration: none;
+            position: relative;
+        }
+        .mobile-nav-item.active { color: var(--gold); }
+        .mobile-nav-item i { font-size: 1.2rem; }
+        .mobile-badge {
+            position: absolute; top: -5px; right: 10px; background: var(--danger); color: white;
+            font-size: 0.55rem; padding: 2px 5px; border-radius: 10px; display: none;
+        }
+        .mobile-badge.active { display: block; }
+
+        /* --- MAIN CONTENT --- */
+        .main-content { flex-grow: 1; padding: 20px; padding-bottom: 100px; width: 100%; }
+
+        .header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+        h2 { font-family: var(--font-serif); font-size: 1.4rem; color: var(--gold); }
+
+        /* --- RESPONSIVE TABLES --- */
+        .data-table { width: 100%; border-collapse: collapse; }
+        .data-table thead { display: none; } 
+        
+        .data-table tr { 
+            display: block; background: var(--bg-surface); margin-bottom: 15px; 
+            padding: 15px; border-radius: 10px; border: 1px solid var(--border-color);
+        }
+        
+        .data-table td { 
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 8px 0; border: none; font-size: 0.85rem; 
+        }
+        
+        .data-table td::before { content: attr(data-label); font-weight: 600; color: var(--gold); }
+
+        .status-pill { padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; text-transform: capitalize; }
+        .status-paid { background: rgba(46, 213, 115, 0.15); color: var(--success); }
+        .status-pending { background: rgba(197, 160, 89, 0.15); color: var(--gold); }
+
+        .product-thumbnail { width: 45px; height: 45px; object-fit: cover; border-radius: 6px; border: 1px solid var(--border-color); background-color: var(--bg-main); }
+
+        /* --- FORMS --- */
+        .form-grid {
+            display: grid; grid-template-columns: 1fr; gap: 20px; background: var(--bg-surface);
+            padding: 25px; border-radius: 12px; border: 1px solid var(--border-color);
+        }
+        .form-group.full { grid-column: span 1; }
+        label { display: block; font-size: 0.75rem; color: var(--text-muted); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px; }
+        input, select, textarea {
+            width: 100%; background: var(--bg-main); border: 1px solid var(--border-color);
+            color: var(--text-main); padding: 12px; border-radius: 6px; font-family: var(--font-sans); outline: none;
+        }
+
+        .btn {
+            background: var(--gold); color: #000; border: none; padding: 12px 24px;
+            font-weight: 600; cursor: pointer; border-radius: 6px; transition: 0.3s;
+            text-transform: uppercase; font-size: 0.8rem; letter-spacing: 1px; display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+        }
+        .btn-outline { background: transparent; border: 1px solid var(--gold); color: var(--gold); }
+        .btn-danger { background: transparent; border: 1px solid var(--danger); color: var(--danger); }
+        .btn-info { background: transparent; border: 1px solid var(--info); color: var(--info); }
+        .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+        .action-group { display: flex; gap: 8px; }
+
+        /* --- MODAL --- */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85); backdrop-filter: blur(8px);
+            display: none; justify-content: center; align-items: center; z-index: 2000; padding: 20px;
+        }
+        .modal-overlay.active { display: flex; }
+        .modal-content {
+            background: var(--bg-surface); padding: 30px; border-radius: 12px;
+            width: 100%; max-width: 500px; border: 1px solid var(--gold);
+        }
+        .dossier-box {
+            background: #000; padding: 20px; border-radius: 8px; font-family: monospace;
+            font-size: 0.85rem; color: #aaa; margin: 20px 0; white-space: pre-wrap; line-height: 1.4;
+        }
+
+        .view-section { display: none; }
+        .view-section.active { display: block; animation: fadeIn 0.4s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .img-preview-box { border: 2px dashed var(--border-color); padding: 20px; text-align: center; border-radius: 8px; cursor: pointer; position: relative; }
+        .img-preview-box img { max-width: 100%; height: 150px; object-fit: contain; margin-top: 10px; display: none; }
+
+        /* --- DESKTOP ENHANCEMENTS --- */
+        @media (min-width: 850px) {
+            .sidebar { display: flex; width: 260px; }
+            .mobile-nav { display: none; }
+            .main-content { padding: 40px; padding-bottom: 40px; max-width: 1200px; margin: 0 auto; }
+            .header-row h2 { font-size: 1.8rem; }
+            .data-table thead { display: table-header-group; }
+            .data-table th { text-align: left; padding: 15px; color: var(--gold); font-size: 0.75rem; text-transform: uppercase; border-bottom: 1px solid var(--border-color); }
+            .data-table tr { display: table-row; background: transparent; margin-bottom: 0; padding: 0; border-radius: 0; border: none; }
+            .data-table td { display: table-cell; padding: 15px; border-bottom: 1px solid var(--border-color); font-size: 0.9rem; }
+            .data-table td::before { display: none; }
+            .form-grid { grid-template-columns: 1fr 1fr; }
+            .form-group.full { grid-column: span 2; }
+        }
+                /* --- STATUS DROPDOWN ENHANCEMENTS --- */
+        .status-select {
+            background: var(--bg-surface);
+            color: var(--gold);
+            border: 1px solid var(--border-color);
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-family: var(--font-sans);
+            font-size: 0.75rem;
+            font-weight: 600;
+            outline: none;
+            cursor: pointer;
+            text-transform: capitalize;
+            appearance: none; /* removes default arrow for cleaner look on mobile */
+            -webkit-appearance: none;
+        }
+        .status-select:focus {
+            border-color: var(--gold);
+            box-shadow: 0 0 5px rgba(197, 160, 89, 0.3);
+        }
+        
+    </style>
+</head>
+<body>
+
+    <div class="app-container">
+        <aside class="sidebar">
+            <div class="brand">ELOR</div>
+            <ul class="nav-menu">
+                <li class="nav-item active" onclick="switchView('orders-view', this)">
+                    <i class="fa fa-shopping-bag"></i> Orders & Clients
+                </li>
+                <li class="nav-item" onclick="switchView('products-view', this)">
+                    <i class="fa fa-gem"></i> The Boutique
+                </li>
+                <li class="nav-item" onclick="prepareAddProduct()" id="nav-add-btn">
+                    <i class="fa fa-plus"></i> Add Product
+                </li>
+                <li class="nav-item" onclick="window.location.href='messages.html'">
+                    <i class="fa fa-comment-dots"></i> Live Support <span class="badge" id="desktopMsgBadge">0</span>
+                </li>
+            </ul>
+            <div class="nav-item" onclick="toggleTheme()" style="margin-top: auto;">
+                <i class="fa fa-adjust"></i> <span id="themeText">Dark Mode</span>
+            </div>
+        </aside>
+
+        <nav class="mobile-nav">
+            <a href="#" class="mobile-nav-item active" onclick="switchView('orders-view', this)">
+                <i class="fa fa-shopping-bag"></i><span>Orders</span>
+            </a>
+            <a href="#" class="mobile-nav-item" onclick="switchView('products-view', this)">
+                <i class="fa fa-gem"></i><span>Boutique</span>
+            </a>
+            <a href="#" class="mobile-nav-item" onclick="prepareAddProduct()">
+                <i class="fa fa-plus"></i><span>Add</span>
+            </a>
+            <a href="messages.html" class="mobile-nav-item">
+                <span class="mobile-badge" id="mobileMsgBadge">0</span>
+                <i class="fa fa-comment-dots"></i><span>Support</span>
+            </a>
+            <a href="#" class="mobile-nav-item" onclick="toggleTheme()">
+                <i class="fa fa-adjust"></i><span>Theme</span>
+            </a>
+        </nav>
+
+        <main class="main-content">
+            <section id="orders-view" class="view-section active">
+                <div class="header-row">
+                    <h2>Orders & Dossiers</h2>
+                    <button class="btn btn-outline" onclick="fetchOrders()"><i class="fa fa-sync"></i></button>
+                </div>
+                <table class="data-table">
+                    <thead>
+                        <tr><th>Ref</th><th>Client</th><th>Product</th><th>Status</th><th>Action</th></tr>
+                    </thead>
+                    <tbody id="ordersTableBody"></tbody>
+                </table>
+            </section>
+
+            <section id="products-view" class="view-section">
+                <div class="header-row">
+                    <h2>The Collection</h2>
+                    <button class="btn btn-outline" onclick="fetchProducts()"><i class="fa fa-sync"></i></button>
+                </div>
+                <table class="data-table">
+                    <thead>
+                        <tr><th>Image</th><th>Item</th><th>Category & Style</th><th>Price</th><th>Actions</th></tr>
+                    </thead>
+                    <tbody id="productsTableBody"></tbody>
+                </table>
+            </section>
+
+            <section id="add-product-view" class="view-section">
+                <div class="header-row">
+                    <h2 id="formTitle">New Masterpiece</h2>
+                    <button class="btn btn-outline" style="display:none;" id="cancelEditBtn" onclick="prepareAddProduct()">Cancel Edit</button>
+                </div>
+                <form id="addProductForm" class="form-grid" onsubmit="handleUpload(event)">
+                    <div class="form-group full">
+                        <label>Name</label>
+                        <input type="text" id="p_name" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Category</label>
+                        <select id="p_category" required>
+    <option value="General">General (All Only)</option>
+    <option value="Accessories">Accessories</option>
+    <option value="Isi Agu">Isi Agu</option>
+    <option value="Agbada">Agbada</option>
+    <option value="Kaftan">Kaftan</option>
+    <option value="Senator Wear">Senator Wear</option>
+    <option value="Atiku">Atiku</option>
+</select>
+
+                    </div>
+                  <div class="form-group">
+    <label>Style Group</label>
+    <select id="p_style" required>
+        <option value="All Ages">Both (Young & Elder)</option>
+        <option value="Young Mogul">Young Mogul (Modern Fit)</option>
+        <option value="Elder Statesman">Elder Statesman (Classic Fit)</option>
+    </select>
+</div>
+
+                    <div class="form-group full">
+                        <label>Price (₦)</label>
+                        <input type="number" id="p_price" required>
+                    </div>
+                    <div class="form-group full">
+                        <label>Product Image</label>
+                        <div class="img-preview-box" onclick="document.getElementById('p_image').click()">
+                            <input type="file" id="p_image" accept="image/*" hidden onchange="processImage(this)">
+                            <i class="fa fa-upload"></i>
+                            <p id="imgStatus">Tap to upload</p>
+                            <img id="imgPreview" src="">
+                        </div>
+                    </div>
+                    <button type="submit" class="btn full" id="submitBtn"><i class="fa fa-save"></i> Publish Product</button>
+                </form>
+            </section>
+        </main>
+    </div>
+
+    <div class="modal-overlay" id="orderModal">
+        <div class="modal-content">
+            <h3 style="color:var(--gold); font-family:var(--font-serif)">Tailor's Dossier</h3>
+            <div class="dossier-box" id="dossierText"></div>
+            <div style="display:flex; gap:10px;">
+                <button class="btn btn-outline" style="flex:1" onclick="closeModal()">Close</button>
+                <button class="btn" style="flex:1" onclick="copyDossier()">Copy Ticket</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://lxtoxjhcdtzuxyirzxpc.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx4dG94amhjZHR6dXh5aXJ6eHBjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwMDU4OTAsImV4cCI6MjA5MTU4MTg5MH0.F5lDJVYUF4aEq8DwkafoWy56I_K6ccpkXiarBJk1LAo'; // PASTE YOUR FULL KEY HERE
+        const client = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        let allOrders = [];
+        let allProducts = [];
+        let compressedBlob = null;
+        let editingProductId = null; // Tracks if we are inserting or updating
+
+        // --- DASHBOARD INIT ---
+        async function initDashboard() {
+            // Load everything in parallel for speed
+            await Promise.all([
+                fetchOrders(),
+                fetchProducts(),
+                fetchUnreadCount()
+            ]);
+        }
+
+        // --- CORE NAVIGATION ---
+        function switchView(viewId, el) {
+            document.querySelectorAll('.view-section').forEach(v => v.classList.remove('active'));
+            document.querySelectorAll('.nav-item, .mobile-nav-item').forEach(n => n.classList.remove('active'));
+            document.getElementById(viewId).classList.add('active');
+            
+            const label = viewId.split('-')[0];
+            document.querySelectorAll('.nav-item, .mobile-nav-item').forEach(n => {
+                if(n.innerText.toLowerCase().includes(label) || n.querySelector('span')?.innerText.toLowerCase().includes(label)) {
+                    n.classList.add('active');
+                }
+            });
+        }
+
+        function toggleTheme() {
+            document.body.classList.toggle('light-mode');
+            const isLight = document.body.classList.contains('light-mode');
+            document.getElementById('themeText').innerText = isLight ? 'Light Mode' : 'Dark Mode';
+        }
+
+        // --- FETCH UNREAD MESSAGES ---
+        async function fetchUnreadCount() {
+            try {
+                const { count, error } = await client
+                    .from('stylist_chats')
+                    .select('*', { count: 'exact', head: true })
+                    .eq('sender', 'user')
+                    .eq('is_read', false);
+                
+                if (!error && count > 0) {
+                    document.getElementById('desktopMsgBadge').innerText = count;
+                    document.getElementById('desktopMsgBadge').classList.add('active');
+                    document.getElementById('mobileMsgBadge').innerText = count;
+                    document.getElementById('mobileMsgBadge').classList.add('active');
+                }
+            } catch(e) { console.error("Error fetching chats", e); }
+        }
+
+             // --- FETCH ORDERS (BULLETPROOF MERGE W/ IMAGES & STATUS UPDATES) ---
+        async function fetchOrders() {
+            const tbody = document.getElementById('ordersTableBody');
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Syncing panel...</td></tr>';
+
+            try {
+                // 1. Get Orders and embedded Products (Added image_url)
+                const { data: orders, error: oError } = await client
+                    .from('orders')
+                    .select(`id, reference, status, amount, created_at, user_id, products(name, image_url)`)
+                    .order('created_at', { ascending: false });
+
+                if(oError) throw oError;
+
+                // 2. Extract unique User IDs
+                const userIds = [...new Set(orders.map(o => o.user_id).filter(Boolean))];
+
+                // 3. Fetch matching Profiles
+                let profiles = [];
+                if(userIds.length > 0) {
+                    const { data: pData } = await client.from('profiles').select('*').in('id', userIds);
+                    profiles = pData || [];
+                }
+
+                // 4. Merge Data securely (Extracting image_url)
+                allOrders = orders.map(order => {
+                    const productData = order.products ? (Array.isArray(order.products) ? order.products[0] : order.products) : null;
+                    return {
+                        ...order,
+                        productName: productData ? productData.name : 'Custom Piece',
+                        productImage: productData ? productData.image_url : null,
+                        profile: profiles.find(p => p.id === order.user_id) || {}
+                    };
+                });
+
+                // Render with Image and Select Dropdown
+                tbody.innerHTML = allOrders.map(o => `
+                    <tr>
+                        <td data-label="Ref">#${o.reference ? o.reference.slice(-5) : 'N/A'}</td>
+                        <td data-label="Client">${o.profile?.full_name || o.profile?.id?.slice(0,6) || 'Guest'}</td>
+                        <td data-label="Product">
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                ${o.productImage ? `<img src="${o.productImage}" class="product-thumbnail">` : `<div class="product-thumbnail" style="display:flex;align-items:center;justify-content:center"><i class="fa fa-image"></i></div>`}
+                                <span>${o.productName}</span>
+                            </div>
+                        </td>
+                        <td data-label="Status">
+                            <select class="status-select" onchange="updateOrderStatus('${o.id}', this.value)">
+                                <option value="Creation Stage" ${o.status === 'Creation Stage' ? 'selected' : ''}>Creation Stage</option>
+                                <option value="In Making" ${o.status === 'In Making' ? 'selected' : ''}>In Making</option>
+                                <option value="Packaging" ${o.status === 'Packaging' ? 'selected' : ''}>Packaging</option>
+                                <option value="Delivering" ${o.status === 'Delivering' ? 'selected' : ''}>Delivering</option>
+                                <option value="Delivered" ${o.status === 'Delivered' ? 'selected' : ''}>Delivered</option>
+                            </select>
+                        </td>
+                        <td data-label="Action"><button class="btn btn-outline" style="padding:5px 10px; font-size:10px" onclick="openDossier('${o.id}')">Dossier</button></td>
+                    </tr>
+                `).join('');
+
+            } catch (err) {
+                console.error("Fetch Orders Error:", err);
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:var(--danger)">Failed to load orders. Check console.</td></tr>';
+            }
+        }
+                // --- UPDATE ORDER STATUS ON THE FLY ---
+        async function updateOrderStatus(orderId, newStatus) {
+            try {
+                const { error } = await client
+                    .from('orders')
+                    .update({ status: newStatus })
+                    .eq('id', orderId);
+
+                if (error) throw error;
+                
+                // Optional: Provide quick visual feedback without annoying alerts
+                console.log(`Order updated to: ${newStatus}`);
+                
+            } catch (err) {
+                console.error("Failed to update status:", err);
+                alert("Failed to update status. Reverting...");
+                fetchOrders(); // Refresh table to revert dropdown if database update fails
+            }
+        }
+
+                function openDossier(orderId) {
+            const o = allOrders.find(x => x.id === orderId);
+            if(!o) return;
+            const m = o.profile?.measurements || {};
+            
+            // Extract the client's name, defaulting to 'Guest' if not found
+            const clientName = o.profile?.full_name || 'Guest';
+            
+            const ticket = `ELOR PRODUCTION TICKET
+---------------------------
+REF:      ${o.reference}
+CLIENT:   ${clientName.toUpperCase()}
+ITEM:     ${o.productName}
+PRICE:    ₦${o.amount?.toLocaleString()}
+ADDR:     ${o.profile?.shipping_address || 'No address provided'}
+PHONE:    ${o.profile?.phone || 'No phone provided'}
+
+MEASUREMENTS (Inches):
+Chest:    ${m.chest || '--'}
+Waist:    ${m.waist || '--'}
+Length:   ${m.length || '--'}
+Sleeve:   ${m.sleeve || '--'}
+Shoulder: ${m.shoulder || '--'}
+---------------------------`;
+
+            document.getElementById('dossierText').innerText = ticket;
+            document.getElementById('orderModal').classList.add('active');
+        }
+        
+        // --- FETCH PRODUCTS ---
+        async function fetchProducts() {
+            const tbody = document.getElementById('productsTableBody');
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Loading Collection...</td></tr>';
+
+            const { data, error } = await client.from('products').select('*').order('created_at', { ascending: false });
+            if(error) return console.error(error);
+            allProducts = data;
+
+            tbody.innerHTML = data.map(p => `
+                <tr>
+                    <td data-label="Image">
+                        ${p.image_url ? `<img src="${p.image_url}" class="product-thumbnail">` : `<div class="product-thumbnail" style="display:flex;align-items:center;justify-content:center"><i class="fa fa-image"></i></div>`}
+                    </td>
+                    <td data-label="Item" style="font-weight:600;">${p.name}</td>
+                    <td data-label="Category & Style">
+                        ${p.category} <br>
+                        <small style="color:var(--text-muted)">${p.style_group}</small>
+                    </td>
+                    <td data-label="Price">₦${p.final_price.toLocaleString()}</td>
+                    <td data-label="Actions">
+                        <div class="action-group">
+                            <button class="btn btn-info" style="padding:6px 10px;" onclick="editProduct('${p.id}')"><i class="fa fa-pen"></i></button>
+                            <button class="btn btn-danger" style="padding:6px 10px;" onclick="deleteProduct('${p.id}')"><i class="fa fa-trash"></i></button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // --- PRODUCT MANAGEMENT (EDIT / ADD / DELETE) ---
+        function prepareAddProduct() {
+            document.getElementById('addProductForm').reset();
+            document.getElementById('formTitle').innerText = "New Masterpiece";
+            document.getElementById('submitBtn').innerHTML = '<i class="fa fa-save"></i> Publish Product';
+            document.getElementById('cancelEditBtn').style.display = 'none';
+            document.getElementById('imgPreview').style.display = 'none';
+            document.getElementById('imgStatus').innerText = "Tap to upload";
+            
+            // Remove required tag from image if we were editing
+            document.getElementById('p_image').required = true; 
+            
+            editingProductId = null;
+            compressedBlob = null;
+            switchView('add-product-view', document.getElementById('nav-add-btn'));
+        }
+
+        function editProduct(id) {
+            const p = allProducts.find(x => x.id === id);
+            if(!p) return;
+
+            document.getElementById('p_name').value = p.name;
+            document.getElementById('p_category').value = p.category;
+            document.getElementById('p_style').value = p.style_group || 'Young Mogul';
+            document.getElementById('p_price').value = p.final_price;
+            
+            if(p.image_url) {
+                document.getElementById('imgPreview').src = p.image_url;
+                document.getElementById('imgPreview').style.display = 'block';
+                document.getElementById('imgStatus').innerText = "Keep current image or tap to replace";
+                document.getElementById('p_image').required = false; // Image not required when editing
+            }
+
+            document.getElementById('formTitle').innerText = "Edit Masterpiece";
+            document.getElementById('submitBtn').innerHTML = '<i class="fa fa-sync"></i> Update Product';
+            document.getElementById('cancelEditBtn').style.display = 'inline-block';
+            
+            editingProductId = id;
+            compressedBlob = null;
+            switchView('add-product-view');
+        }
+
+        function processImage(input) {
+            const file = input.files[0];
+            if(!file) return;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const img = new Image();
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    const MAX_WIDTH = 600;
+                    if(img.width > MAX_WIDTH) {
+                        canvas.width = MAX_WIDTH; canvas.height = (img.height / img.width) * MAX_WIDTH;
+                    } else {
+                        canvas.width = img.width; canvas.height = img.height;
+                    }
+                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                    canvas.toBlob(blob => {
+                        compressedBlob = blob;
+                        document.getElementById('imgPreview').src = URL.createObjectURL(blob);
+                        document.getElementById('imgPreview').style.display = 'block';
+                        document.getElementById('imgStatus').innerText = `Ready (${(blob.size / 1024).toFixed(1)} KB)`;
+                    }, 'image/jpeg', 0.6);
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        async function handleUpload(e) {
+    e.preventDefault();
+    const btn = document.getElementById('submitBtn');
+    
+    // Prevent double-clicks
+    if (btn.disabled) return; 
+
+    btn.disabled = true; 
+    btn.innerText = "Saving...";
+
+    try {
+        let url = undefined;
+
+        // 1. Upload new image if provided
+        if(compressedBlob) {
+            btn.innerText = "Uploading Image...";
+            const path = `products/${Date.now()}.jpg`;
+            const { data: sData, error: sError } = await client.storage.from('elor-assets').upload(path, compressedBlob);
+            if(sError) throw sError;
+            url = `${SUPABASE_URL}/storage/v1/object/public/elor-assets/${path}`;
+        }
+
+        btn.innerText = "Updating Database...";
+        const payload = {
+            name: document.getElementById('p_name').value,
+            category: document.getElementById('p_category').value,
+            style_group: document.getElementById('p_style').value,
+            original_price: parseFloat(document.getElementById('p_price').value),
+            final_price: parseFloat(document.getElementById('p_price').value),
+        };
+        
+        if(url) payload.image_url = url;
+
+        if(editingProductId) {
+            const { error } = await client.from('products').update(payload).eq('id', editingProductId);
+            if(error) throw error;
+        } else {
+            const { error } = await client.from('products').insert([payload]);
+            if(error) throw error;
+        }
+
+        // --- THE CRITICAL FIXES ---
+        await fetchProducts(); // Await the refresh so the data is there
+        prepareAddProduct();   // This resets the form and compressedBlob
+        switchView('products-view'); 
+        alert("Masterpiece saved successfully!");
+
+    } catch (err) {
+        console.error("Upload failed:", err);
+        alert("Error: " + err.message);
+    } finally {
+        // Always re-enable button regardless of success/fail
+        btn.disabled = false;
+        btn.innerHTML = editingProductId ? '<i class="fa fa-sync"></i> Update Product' : '<i class="fa fa-save"></i> Publish Product';
+    }
+}
+
+
+        async function deleteProduct(id) {
+            if(confirm("Are you sure you want to permanently remove this piece?")) {
+                await client.from('products').delete().eq('id', id);
+                fetchProducts();
+            }
+        }
+
+        // --- MODAL UTILS ---
+        function closeModal() { document.getElementById('orderModal').classList.remove('active'); }
+        function copyDossier() { navigator.clipboard.writeText(document.getElementById('dossierText').innerText); alert("Ticket Copied!"); }
+
+        // Start Application
+        initDashboard();
+    </script>
+</body>
+</html>
