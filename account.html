@@ -324,6 +324,14 @@
         }
     }
 
+
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/sw.js')
+    .then(reg => {
+      console.log('SW registered:', reg.scope);
+    })
+    .catch(err => console.error('SW failed:', err));
+}
     function triggerAlert(title, text, type="info", confirmCallback=null) {
         document.getElementById('gm-title').innerText = title;
         document.getElementById('gm-text').innerText = text;
@@ -558,7 +566,13 @@
             if (!userSession) return;
             
             const registration = await navigator.serviceWorker.ready;
-            const existingSubscription = await registration.pushManager.getSubscription();
+
+if (!registration || !registration.pushManager) {
+    triggerAlert("Not Supported", "Service Worker or Push not available", "warning");
+    return;
+}
+
+const existingSubscription = await registration.pushManager.getSubscription();
 
             if (existingSubscription) {
                 triggerAlert("Disable Alerts?", "Are you sure you want to stop receiving immediate native style push notifications?", "warning", async () => {
@@ -621,6 +635,11 @@
 
 document.addEventListener('DOMContentLoaded', () => App.init());
 
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/sw.js')
+    .then(reg => console.log('SW registered:', reg.scope))
+    .catch(err => console.error('SW failed:', err));
+}
     </script>
 </body>
 </html>
