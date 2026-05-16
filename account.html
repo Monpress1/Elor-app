@@ -79,7 +79,6 @@
         .input-group { margin-bottom: 20px; }
         .input-group label { display: block; font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; margin-bottom: 8px; letter-spacing: 1px; }
         
-        /* Input Styling: Readonly vs Edit Mode */
         .custom-input {
             width: 100%; background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.1); 
             padding: 14px; color: #fff; border-radius: 8px; font-family: 'Montserrat', sans-serif; font-size: 1rem;
@@ -93,28 +92,12 @@
 
         .measure-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
 
-        /* Guide Image Box */
         .guide-box {
-            width: 100%;
-            height: 420px;
-            border: 1px solid rgba(212, 175, 55, 0.3);
-            border-radius: 12px;
-            margin-bottom: 25px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: rgba(0,0,0,0.5);
-            overflow: hidden;
-            position: relative;
+            width: 100%; height: 420px; border: 1px solid rgba(212, 175, 55, 0.3);
+            border-radius: 12px; margin-bottom: 25px; display: flex; align-items: center;
+            justify-content: center; background: rgba(0,0,0,0.5); overflow: hidden; position: relative;
         }
-        .guide-box img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            display: none;
-            animation: fadeIn 0.9s;
-        }
-
+        .guide-box img { width: 100%; height: 100%; object-fit: cover; display: none; animation: fadeIn 0.9s; }
         .guide-placeholder { color: var(--text-muted); font-size: 0.85rem; text-align: center; font-style: italic; }
 
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
@@ -142,7 +125,6 @@
         .gm-confirm { background: var(--accent-gold); color: #000; flex: 1; }
         .gm-cancel { background: transparent; border: 1px solid var(--text-muted); color: var(--text-main); flex: 1; display: none; }
         
-        /* Export Area Wrap */
         .export-area { background: var(--bg-deep); padding-bottom: 20px; }
     </style>
 </head>
@@ -391,7 +373,7 @@
                     document.getElementById('m_sleeve').value = m.sleeve || '';
                     document.getElementById('m_trouser_length').value = m.trouser_length || '';
                     document.getElementById('m_waist').value = m.waist || '';
-                    document.getElementById('m_thigh').value = m.thigh_circumference || '';
+                    document.getElementById('m_thigh').value = m.thigh || '';
 
                     const mComplete = !!(m.chest && m.neck && m.shirt_length && m.sleeve && m.trouser_length && m.waist && m.thigh_circumference);
                     updateStatusBadge('badge-measurements', mComplete);
@@ -528,7 +510,6 @@
                 }
 
                 if (Notification.permission === 'granted') {
-                    // Explicitly targeted to match root registration context matching your deployment structure
                     const registration = await navigator.serviceWorker.getRegistration('/');
                     if (registration && registration.pushManager) {
                         const subscription = await registration.pushManager.getSubscription();
@@ -563,8 +544,14 @@
                 }
 
                 try {
-                    // Explicitly look up the service worker registered at the domain root '/'
-                    const registration = await navigator.serviceWorker.getRegistration('/');
+                    // ASYNC RETRY LOOP: Give the browser up to 3 seconds to spin up the worker 
+                    // and register properly out of the temporary locked state after permissions change.
+                    let registration = null;
+                    for (let i = 0; i < 6; i++) {
+                        registration = await navigator.serviceWorker.getRegistration('/');
+                        if (registration) break;
+                        await new Promise(resolve => setTimeout(resolve, 500)); // wait 500ms
+                    }
 
                     if (!registration || !registration.pushManager) {
                         triggerAlert("Not Ready", "Service Worker is not active yet. Please ensure your site is served over HTTPS and sw.js is linked correctly.", "warning");
@@ -626,7 +613,6 @@
 
     document.addEventListener('DOMContentLoaded', () => App.init());
 
-    // Consolidated registration setup targeting root directory context
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('/sw.js')
         .then(reg => console.log('SW registered successfully scope:', reg.scope))
@@ -635,3 +621,4 @@
     </script>
 </body>
 </html>
+
