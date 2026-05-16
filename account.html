@@ -94,26 +94,26 @@
         .measure-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
 
         /* Guide Image Box */
-        ..guide-box {
-    width: 100%;
-    height: 420px;
-    border: 1px solid rgba(212, 175, 55, 0.3);
-    border-radius: 12px;
-    margin-bottom: 25px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: rgba(0,0,0,0.5);
-    overflow: hidden;
-    position: relative;
-}
-       .guide-box img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    display: none;
-    animation: fadeIn 0.9s;
-}
+        .guide-box {
+            width: 100%;
+            height: 420px;
+            border: 1px solid rgba(212, 175, 55, 0.3);
+            border-radius: 12px;
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0,0,0,0.5);
+            overflow: hidden;
+            position: relative;
+        }
+        .guide-box img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: none;
+            animation: fadeIn 0.9s;
+        }
 
         .guide-placeholder { color: var(--text-muted); font-size: 0.85rem; text-align: center; font-style: italic; }
 
@@ -176,20 +176,18 @@
                 <i class="fa-solid fa-chevron-right" style="color:var(--text-muted)"></i>
             </li>
             
-            
             <li class="menu-item" onclick="App.togglePushNotifications()" style="display: flex; flex-direction: column; align-items: stretch; gap: 10px; padding: 15px 20px;">
-    <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
-        <div class="menu-left">
-            <i class="fa-regular fa-bell"></i> Push Alerts
-        </div>
-        <span class="status-badge status-incomplete" id="badge-notifications">Disabled</span>
-    </div>
-    <div style="font-size: 0.75rem; color: var(--text-muted); line-height: 1.4; padding-left: 40px; margin-top: -5px;">
-        Receive instant updates from ELOR regarding your bespoke orders and updates, even while outside the app.
-    </div>
-</li>
+                <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
+                    <div class="menu-left">
+                        <i class="fa-regular fa-bell"></i> Push Alerts
+                    </div>
+                    <span class="status-badge status-incomplete" id="badge-notifications">Disabled</span>
+                </div>
+                <div style="font-size: 0.75rem; color: var(--text-muted); line-height: 1.4; padding-left: 40px; margin-top: -5px;">
+                    Receive instant updates from ELOR regarding your bespoke orders and updates, even while outside the app.
+                </div>
+            </li>
 
-            
             <li class="menu-item" onclick="App.confirmLogout()">
                 <div class="menu-left"><i class="fa-solid fa-arrow-right-from-bracket"></i> Log Out</div>
             </li>
@@ -200,6 +198,7 @@
         </ul>
     </div>
 
+    <!-- PROFILE VIEW -->
     <div class="sub-view" id="profile-view">
         <div class="view-header">
             <a href="javascript:void(0)" onclick="App.closeViews()"><i class="fa-solid fa-arrow-left" style="color:var(--accent-gold); font-size:1.2rem;"></i></a>
@@ -236,6 +235,7 @@
         </div>
     </div>
 
+    <!-- MEASUREMENT VIEW -->
     <div class="sub-view" id="measurement-view">
         <div class="view-header" data-html2canvas-ignore>
             <a href="javascript:void(0)" onclick="App.closeViews()"><i class="fa-solid fa-arrow-left" style="color:var(--accent-gold); font-size:1.2rem;"></i></a>
@@ -288,6 +288,7 @@
         </div>
     </div>
 
+    <!-- ALERTS -->
     <div class="glass-overlay" id="glass-modal">
         <div class="glass-modal">
             <i class="fa-solid fa-gem gm-icon" id="gm-icon"></i>
@@ -302,344 +303,338 @@
 
     <script>
        const App = (function() {
-    const DB_URL = 'https://lxtoxjhcdtzuxyirzxpc.supabase.co';
-    const DB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx4dG94amhjZHR6dXh5aXJ6eHBjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwMDU4OTAsImV4cCI6MjA5MTU4MTg5MH0.F5lDJVYUF4aEq8DwkafoWy56I_K6ccpkXiarBJk1LAo'; 
-    const client = window.supabase.createClient(DB_URL, DB_KEY);
-    
-    let userSession = null;
-    let isProfileEdit = false;
-    let isMeasureEdit = false;
-
-    // --- UI HELPERS ---
-    function updateStatusBadge(id, isComplete) {
-        const el = document.getElementById(id);
-        if(el) {
-            if(isComplete) {
-                el.className = 'status-badge status-complete';
-                el.innerText = 'Complete';
-            } else {
-                el.className = 'status-badge status-incomplete';
-                el.innerText = 'Incomplete';
-            }
-        }
-    }
-
-
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/sw.js')
-    .then(reg => {
-      console.log('SW registered:', reg.scope);
-    })
-    .catch(err => console.error('SW failed:', err));
-}
-    function triggerAlert(title, text, type="info", confirmCallback=null) {
-        document.getElementById('gm-title').innerText = title;
-        document.getElementById('gm-text').innerText = text;
+        const DB_URL = 'https://lxtoxjhcdtzuxyirzxpc.supabase.co';
+        const DB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx4dG94amhjZHR6dXh5aXJ6eHBjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwMDU4OTAsImV4cCI6MjA5MTU4MTg5MH0.F5lDJVYUF4aEq8DwkafoWy56I_K6ccpkXiarBJk1LAo'; 
+        const client = window.supabase.createClient(DB_URL, DB_KEY);
         
-        const icon = document.getElementById('gm-icon');
-        icon.className = type === 'warning' ? 'fa-solid fa-triangle-exclamation gm-icon' : (type === 'success' ? 'fa-solid fa-check-double gm-icon' : 'fa-solid fa-gem gm-icon');
-        icon.style.color = type === 'warning' ? 'var(--danger)' : 'var(--accent-gold)';
+        let userSession = null;
+        let isProfileEdit = false;
+        let isMeasureEdit = false;
 
-        const modal = document.getElementById('glass-modal');
-        const btnCancel = document.getElementById('gm-cancel');
-        const btnConfirm = document.getElementById('gm-confirm');
-
-        if (confirmCallback) {
-            btnCancel.style.display = 'block';
-            btnConfirm.innerText = 'Confirm';
-            btnConfirm.onclick = () => { modal.classList.remove('active'); confirmCallback(); };
-        } else {
-            btnCancel.style.display = 'none';
-            btnConfirm.innerText = 'Understood';
-            btnConfirm.onclick = () => { modal.classList.remove('active'); };
-        }
-        
-        btnCancel.onclick = () => modal.classList.remove('active');
-        modal.classList.add('active');
-    }
-
-    return {
-        async init() {
-            const { data: { session } } = await client.auth.getSession();
-            if (!session) {
-                window.location.href = 'auth.html';
-                return;
-            }
-            userSession = session;
-            
-            // Parse Auth Metadata
-            const meta = session.user.user_metadata || {};
-            const firstName = meta.first_name || 'Mogul';
-            const lastName = meta.last_name || '';
-            
-            document.getElementById('userName').innerText = `${firstName} ${lastName}`.trim();
-            document.getElementById('p_firstName').value = firstName;
-            document.getElementById('p_lastName').value = lastName;
-
-            await this.loadData();
-            await this.checkNotificationStatus(); // Auto check permissions on load
-        },
-
-        async loadData() {
-            const { data } = await client.from('profiles').select('*').eq('id', userSession.user.id).single();
-            if (data) {
-                // Profile Data
-                document.getElementById('p_delivery').value = data.shipping_address || '';
-                document.getElementById('p_residential').value = data.residential_address || '';
-                document.getElementById('p_phone').value = data.phone || '';
-                document.getElementById('p_whatsapp').value = data.whatsapp_number || '';
-
-                const pComplete = !!(data.shipping_address && data.residential_address && data.phone);
-                updateStatusBadge('badge-profile', pComplete);
-
-                // Measurement Data
-                const m = data.measurements || {};
-                document.getElementById('m_chest').value = m.chest || '';
-                document.getElementById('m_neck').value = m.neck || '';
-                document.getElementById('m_shirt_length').value = m.shirt_length || '';
-                document.getElementById('m_sleeve').value = m.sleeve || '';
-                document.getElementById('m_trouser_length').value = m.trouser_length || '';
-                document.getElementById('m_waist').value = m.waist || '';
-                document.getElementById('m_thigh').value = m.thigh_circumference || '';
-
-                const mComplete = !!(m.chest && m.neck && m.shirt_length && m.sleeve && m.trouser_length && m.waist && m.thigh_circumference);
-                updateStatusBadge('badge-measurements', mComplete);
-            } else {
-                updateStatusBadge('badge-profile', false);
-                updateStatusBadge('badge-measurements', false);
-            }
-        },
-
-        openView(id) {
-            document.getElementById(id).style.display = 'block';
-            window.scrollTo(0, 0);
-        },
-
-        closeViews() {
-            document.querySelectorAll('.sub-view').forEach(v => v.style.display = 'none');
-            // Reset forms to readonly
-            if(isProfileEdit) this.toggleEditMode('profile');
-            if(isMeasureEdit) this.toggleEditMode('measure');
-            this.loadData(); // refresh status badges
-        },
-
-        toggleEditMode(type) {
-            if(type === 'profile') {
-                isProfileEdit = !isProfileEdit;
-                const inputs = document.querySelectorAll('.p-input');
-                inputs.forEach(input => {
-                    if(input.id !== 'p_firstName' && input.id !== 'p_lastName') {
-                        input.disabled = !isProfileEdit;
+        function updateStatusBadge(id, isComplete, overrideText = null) {
+            const el = document.getElementById(id);
+            if(el) {
+                if (overrideText) {
+                    el.className = isComplete ? 'status-badge status-complete' : 'status-badge status-incomplete';
+                    el.innerText = overrideText;
+                } else {
+                    if(isComplete) {
+                        el.className = 'status-badge status-complete';
+                        el.innerText = 'Complete';
+                    } else {
+                        el.className = 'status-badge status-incomplete';
+                        el.innerText = 'Incomplete';
                     }
-                });
-                document.getElementById('btn-save-profile').style.display = isProfileEdit ? 'block' : 'none';
-                document.getElementById('btn-edit-profile').innerHTML = isProfileEdit ? '<i class="fa-solid fa-xmark"></i> Cancel' : '<i class="fa-solid fa-pen"></i> Edit';
-            } else {
-                isMeasureEdit = !isMeasureEdit;
-                document.querySelectorAll('.m-input').forEach(i => i.disabled = !isMeasureEdit);
-                document.getElementById('btn-save-measure').style.display = isMeasureEdit ? 'block' : 'none';
-                document.getElementById('btn-edit-measure').innerHTML = isMeasureEdit ? '<i class="fa-solid fa-xmark"></i> Cancel' : '<i class="fa-solid fa-pen"></i> Edit';
-                
-                if(!isMeasureEdit) {
-                    document.getElementById('guide-img').style.display = 'none';
-                    document.getElementById('guide-text').style.display = 'block';
                 }
             }
-        },
+        }
 
-        showGuide(imgSrc) {
-            if(!isMeasureEdit) return; 
-            document.getElementById('guide-text').style.display = 'none';
-            const img = document.getElementById('guide-img');
-            img.src = imgSrc;
-            img.style.display = 'block';
-        },
-
-        async saveProfile() {
-            const payload = {
-                id: userSession.user.id,
-                shipping_address: document.getElementById('p_delivery').value,
-                residential_address: document.getElementById('p_residential').value,
-                phone: document.getElementById('p_phone').value,
-                whatsapp_number: document.getElementById('p_whatsapp').value,
-            };
-
-            const { error } = await client.from('profiles').upsert(payload);
-            if (error) {
-                triggerAlert("Update Failed", error.message, "warning");
-            } else {
-                triggerAlert("Profile Secured", "Your shipping and contact details have been elegantly updated.", "success");
-                this.toggleEditMode('profile');
-            }
-        },
-
-        async saveMeasurements() {
-            const { data: existing } = await client.from('profiles').select('*').eq('id', userSession.user.id).single();
+        function triggerAlert(title, text, type="info", confirmCallback=null) {
+            document.getElementById('gm-title').innerText = title;
+            document.getElementById('gm-text').innerText = text;
             
-            const payload = {
-                id: userSession.user.id,
-                measurements: {
-                    ...(existing?.measurements || {}),
-                    chest: document.getElementById('m_chest').value,
-                    neck: document.getElementById('m_neck').value,
-                    shirt_length: document.getElementById('m_shirt_length').value,
-                    sleeve: document.getElementById('m_sleeve').value,
-                    trouser_length: document.getElementById('m_trouser_length').value,
-                    waist: document.getElementById('m_waist').value,
-                    thigh_circumference: document.getElementById('m_thigh').value,
-                }
-            };
+            const icon = document.getElementById('gm-icon');
+            icon.className = type === 'warning' ? 'fa-solid fa-triangle-exclamation gm-icon' : (type === 'success' ? 'fa-solid fa-check-double gm-icon' : 'fa-solid fa-gem gm-icon');
+            icon.style.color = type === 'warning' ? 'var(--danger)' : 'var(--accent-gold)';
 
-            const { error } = await client.from('profiles').upsert(payload);
-            if (error) {
-                triggerAlert("Update Failed", error.message, "warning");
+            const modal = document.getElementById('glass-modal');
+            const btnCancel = document.getElementById('gm-cancel');
+            const btnConfirm = document.getElementById('gm-confirm');
+
+            if (confirmCallback) {
+                btnCancel.style.display = 'block';
+                btnConfirm.innerText = 'Confirm';
+                btnConfirm.onclick = () => { modal.classList.remove('active'); confirmCallback(); };
             } else {
-                triggerAlert("Measurements Secured", "Your bespoke blueprint has been recorded successfully.", "success");
-                this.toggleEditMode('measure');
+                btnCancel.style.display = 'none';
+                btnConfirm.innerText = 'Understood';
+                btnConfirm.onclick = () => { modal.classList.remove('active'); };
             }
-        },
+            
+            btnCancel.onclick = () => modal.classList.remove('active');
+            modal.classList.add('active');
+        }
 
-        exportToImage() {
-            const target = document.getElementById('export-target');
-            const wasEditing = isMeasureEdit;
-            if(wasEditing) this.toggleEditMode('measure');
-
-            html2canvas(target, { backgroundColor: '#050505', scale: 2 }).then(canvas => {
-                const link = document.createElement('a');
-                link.download = `ELOR_Measurements_${document.getElementById('p_firstName').value}.png`;
-                link.href = canvas.toDataURL('image/png');
-                link.click();
+        return {
+            async init() {
+                const { data: { session } } = await client.auth.getSession();
+                if (!session) {
+                    window.location.href = 'auth.html';
+                    return;
+                }
+                userSession = session;
                 
-                triggerAlert("Export Complete", "Your measurement dossier has been saved to your device.", "success");
+                const meta = session.user.user_metadata || {};
+                const firstName = meta.first_name || 'Mogul';
+                const lastName = meta.last_name || '';
+                
+                document.getElementById('userName').innerText = `${firstName} ${lastName}`.trim();
+                document.getElementById('p_firstName').value = firstName;
+                document.getElementById('p_lastName').value = lastName;
+
+                await this.loadData();
+                await this.checkNotificationStatus();
+            },
+
+            async loadData() {
+                const { data } = await client.from('profiles').select('*').eq('id', userSession.user.id).single();
+                if (data) {
+                    document.getElementById('p_delivery').value = data.shipping_address || '';
+                    document.getElementById('p_residential').value = data.residential_address || '';
+                    document.getElementById('p_phone').value = data.phone || '';
+                    document.getElementById('p_whatsapp').value = data.whatsapp_number || '';
+
+                    const pComplete = !!(data.shipping_address && data.residential_address && data.phone);
+                    updateStatusBadge('badge-profile', pComplete);
+
+                    const m = data.measurements || {};
+                    document.getElementById('m_chest').value = m.chest || '';
+                    document.getElementById('m_neck').value = m.neck || '';
+                    document.getElementById('m_shirt_length').value = m.shirt_length || '';
+                    document.getElementById('m_sleeve').value = m.sleeve || '';
+                    document.getElementById('m_trouser_length').value = m.trouser_length || '';
+                    document.getElementById('m_waist').value = m.waist || '';
+                    document.getElementById('m_thigh').value = m.thigh_circumference || '';
+
+                    const mComplete = !!(m.chest && m.neck && m.shirt_length && m.sleeve && m.trouser_length && m.waist && m.thigh_circumference);
+                    updateStatusBadge('badge-measurements', mComplete);
+                } else {
+                    updateStatusBadge('badge-profile', false);
+                    updateStatusBadge('badge-measurements', false);
+                }
+            },
+
+            openView(id) {
+                document.getElementById(id).style.display = 'block';
+                window.scrollTo(0, 0);
+            },
+
+            closeViews() {
+                document.querySelectorAll('.sub-view').forEach(v => v.style.display = 'none');
+                if(isProfileEdit) this.toggleEditMode('profile');
+                if(isMeasureEdit) this.toggleEditMode('measure');
+                this.loadData();
+            },
+
+            toggleEditMode(type) {
+                if(type === 'profile') {
+                    isProfileEdit = !isProfileEdit;
+                    const inputs = document.querySelectorAll('.p-input');
+                    inputs.forEach(input => {
+                        if(input.id !== 'p_firstName' && input.id !== 'p_lastName') {
+                            input.disabled = !isProfileEdit;
+                        }
+                    });
+                    document.getElementById('btn-save-profile').style.display = isProfileEdit ? 'block' : 'none';
+                    document.getElementById('btn-edit-profile').innerHTML = isProfileEdit ? '<i class="fa-solid fa-xmark"></i> Cancel' : '<i class="fa-solid fa-pen"></i> Edit';
+                } else {
+                    isMeasureEdit = !isMeasureEdit;
+                    document.querySelectorAll('.m-input').forEach(i => i.disabled = !isMeasureEdit);
+                    document.getElementById('btn-save-measure').style.display = isMeasureEdit ? 'block' : 'none';
+                    document.getElementById('btn-edit-measure').innerHTML = isMeasureEdit ? '<i class="fa-solid fa-xmark"></i> Cancel' : '<i class="fa-solid fa-pen"></i> Edit';
+                    
+                    if(!isMeasureEdit) {
+                        document.getElementById('guide-img').style.display = 'none';
+                        document.getElementById('guide-text').style.display = 'block';
+                    }
+                }
+            },
+
+            showGuide(imgSrc) {
+                if(!isMeasureEdit) return; 
+                document.getElementById('guide-text').style.display = 'none';
+                const img = document.getElementById('guide-img');
+                img.src = imgSrc;
+                img.style.display = 'block';
+            },
+
+            async saveProfile() {
+                const payload = {
+                    id: userSession.user.id,
+                    shipping_address: document.getElementById('p_delivery').value,
+                    residential_address: document.getElementById('p_residential').value,
+                    phone: document.getElementById('p_phone').value,
+                    whatsapp_number: document.getElementById('p_whatsapp').value,
+                };
+
+                const { error } = await client.from('profiles').upsert(payload);
+                if (error) {
+                    triggerAlert("Update Failed", error.message, "warning");
+                } else {
+                    triggerAlert("Profile Secured", "Your shipping and contact details have been elegantly updated.", "success");
+                    this.toggleEditMode('profile');
+                }
+            },
+
+            async saveMeasurements() {
+                const { data: existing } = await client.from('profiles').select('*').eq('id', userSession.user.id).single();
+                
+                const payload = {
+                    id: userSession.user.id,
+                    measurements: {
+                        ...(existing?.measurements || {}),
+                        chest: document.getElementById('m_chest').value,
+                        neck: document.getElementById('m_neck').value,
+                        shirt_length: document.getElementById('m_shirt_length').value,
+                        sleeve: document.getElementById('m_sleeve').value,
+                        trouser_length: document.getElementById('m_trouser_length').value,
+                        waist: document.getElementById('m_waist').value,
+                        thigh_circumference: document.getElementById('m_thigh').value,
+                    }
+                };
+
+                const { error } = await client.from('profiles').upsert(payload);
+                if (error) {
+                    triggerAlert("Update Failed", error.message, "warning");
+                } else {
+                    triggerAlert("Measurements Secured", "Your bespoke blueprint has been recorded successfully.", "success");
+                    this.toggleEditMode('measure');
+                }
+            },
+
+            exportToImage() {
+                const target = document.getElementById('export-target');
+                const wasEditing = isMeasureEdit;
                 if(wasEditing) this.toggleEditMode('measure');
-            });
-        },
 
-        confirmLogout() {
-            triggerAlert("Departing?", "Are you sure you wish to log out of your atelier account?", "warning", async () => {
-                await client.auth.signOut();
-                window.location.href = 'index.html';
-            });
-        },
+                html2canvas(target, { backgroundColor: '#050505', scale: 2 }).then(canvas => {
+                    const link = document.createElement('a');
+                    link.download = `ELOR_Measurements_${document.getElementById('p_firstName').value}.png`;
+                    link.href = canvas.toDataURL('image/png');
+                    link.click();
+                    
+                    triggerAlert("Export Complete", "Your measurement dossier has been saved to your device.", "success");
+                    if(wasEditing) this.toggleEditMode('measure');
+                });
+            },
 
-        confirmDelete() {
-            triggerAlert("Severe Action", "Are you entirely sure you want to permanently delete your ELOR account and all bespoke records? This cannot be undone.", "warning", async () => {
-                triggerAlert("Request Sent", "Your account deletion request has been forwarded to the atelier masters. You will be logged out.", "info", async () => {
+            confirmLogout() {
+                triggerAlert("Departing?", "Are you sure you wish to log out of your atelier account?", "warning", async () => {
                     await client.auth.signOut();
                     window.location.href = 'index.html';
                 });
-            });
-        },
+            },
 
-        // --- NEW PUSH NOTIFICATION FUNCTIONS ---
-        async checkNotificationStatus() {
-            if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
-                const notifBadge = document.getElementById('badge-notifications');
-                if (notifBadge) {
-                    notifBadge.className = 'status-badge status-incomplete';
-                    notifBadge.innerText = 'Unsupported';
-                }
-                return;
-            }
-
-            const notifBadge = document.getElementById('badge-notifications');
-            if (!notifBadge) return;
-
-            if (Notification.permission === 'granted') {
-                const registration = await navigator.serviceWorker.ready;
-                const subscription = await registration.pushManager.getSubscription();
-                
-                if (subscription) {
-                    notifBadge.className = 'status-badge status-complete';
-                    notifBadge.innerText = 'Enabled';
-                } else {
-                    notifBadge.className = 'status-badge status-incomplete';
-                    notifBadge.innerText = 'Disabled';
-                }
-            } else {
-                notifBadge.className = 'status-badge status-incomplete';
-                notifBadge.innerText = 'Disabled';
-            }
-        },
-
-        async togglePushNotifications() {
-            if (!userSession) return;
-            
-            const registration = await navigator.serviceWorker.ready;
-
-if (!registration || !registration.pushManager) {
-    triggerAlert("Not Supported", "Service Worker or Push not available", "warning");
-    return;
-}
-
-const existingSubscription = await registration.pushManager.getSubscription();
-
-            if (existingSubscription) {
-                triggerAlert("Disable Alerts?", "Are you sure you want to stop receiving immediate native style push notifications?", "warning", async () => {
-                    await existingSubscription.unsubscribe();
-                    
-                    await client
-                        .from('push_subscriptions')
-                        .delete()
-                        .eq('user_id', userSession.user.id)
-                        .like('subscription_json->>endpoint', existingSubscription.endpoint);
-
-                    this.checkNotificationStatus();
-                    triggerAlert("Alerts Silenced", "You will no longer receive push notifications on this browser.", "success");
+            confirmDelete() {
+                triggerAlert("Severe Action", "Are you entirely sure you want to permanently delete your ELOR account and all bespoke records? This cannot be undone.", "warning", async () => {
+                    triggerAlert("Request Sent", "Your account deletion request has been forwarded to the atelier masters. You will be logged out.", "info", async () => {
+                        await client.auth.signOut();
+                        window.location.href = 'index.html';
+                    });
                 });
-            } else {
-                const permission = await Notification.requestPermission();
-                if (permission !== 'granted') {
-                    triggerAlert("Permission Denied", "Please allow notification privileges in your device or browser settings manually.", "warning");
-                    this.checkNotificationStatus();
+            },
+
+            async checkNotificationStatus() {
+                if (!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) {
+                    updateStatusBadge('badge-notifications', false, 'Unsupported');
                     return;
                 }
 
+                if (Notification.permission === 'granted') {
+                    const registration = await navigator.serviceWorker.getRegistration();
+                    if (registration && registration.pushManager) {
+                        const subscription = await registration.pushManager.getSubscription();
+                        if (subscription) {
+                            updateStatusBadge('badge-notifications', true, 'Enabled');
+                            return;
+                        }
+                    }
+                } 
+                
+                updateStatusBadge('badge-notifications', false, 'Disabled');
+            },
+
+            async togglePushNotifications() {
+                if (!userSession) return;
+                
+                // 1. Immediately request permission to preserve user gesture (Crucial for iOS/Safari)
+                if (!('Notification' in window) || !('serviceWorker' in navigator)) {
+                    triggerAlert("Not Supported", "Push notifications are not available on this browser.", "warning");
+                    return;
+                }
+
+                if (Notification.permission === 'default') {
+                    const permission = await Notification.requestPermission();
+                    if (permission !== 'granted') {
+                        triggerAlert("Permission Denied", "Please allow notification privileges in your device or browser settings manually.", "warning");
+                        this.checkNotificationStatus();
+                        return;
+                    }
+                } else if (Notification.permission === 'denied') {
+                    triggerAlert("Permission Denied", "Notifications are blocked. Please enable them in your browser settings.", "warning");
+                    return;
+                }
+
+                // 2. Fetch Registration SAFELY (replaces the hanging .ready promise)
                 try {
-                    const VAPID_PUBLIC_KEY = 'BAkq_2ZCp335lLLytu54Wsv7RDDhHYgz21DMHQ1Np-6RKR-VcpzxNaJ4HNGUKT25jNf6J_T9s1hh8mUGWTBXax8';
-                    const convertedKey = this.urlBase64ToUint8Array(VAPID_PUBLIC_KEY);
+                    const registration = await navigator.serviceWorker.getRegistration();
 
-                    const newSubscription = await registration.pushManager.subscribe({
-                        userVisibleOnly: true,
-                        applicationServerKey: convertedKey
-                    });
+                    if (!registration || !registration.pushManager) {
+                        triggerAlert("Not Ready", "Service Worker is not active yet. Please ensure your site is served over HTTPS and sw.js is linked correctly.", "warning");
+                        return;
+                    }
 
-                    await client
-                        .from('push_subscriptions')
-                        .insert({
-                            user_id: userSession.user.id,
-                            subscription_json: newSubscription
+                    const existingSubscription = await registration.pushManager.getSubscription();
+
+                    if (existingSubscription) {
+                        triggerAlert("Disable Alerts?", "Are you sure you want to stop receiving immediate native style push notifications?", "warning", async () => {
+                            await existingSubscription.unsubscribe();
+                            
+                            await client
+                                .from('push_subscriptions')
+                                .delete()
+                                .eq('user_id', userSession.user.id)
+                                .like('subscription_json->>endpoint', existingSubscription.endpoint);
+
+                            this.checkNotificationStatus();
+                            triggerAlert("Alerts Silenced", "You will no longer receive push notifications on this browser.", "success");
+                        });
+                    } else {
+                        const VAPID_PUBLIC_KEY = 'BAkq_2ZCp335lLLytu54Wsv7RDDhHYgz21DMHQ1Np-6RKR-VcpzxNaJ4HNGUKT25jNf6J_T9s1hh8mUGWTBXax8';
+                        const convertedKey = this.urlBase64ToUint8Array(VAPID_PUBLIC_KEY);
+
+                        const newSubscription = await registration.pushManager.subscribe({
+                            userVisibleOnly: true,
+                            applicationServerKey: convertedKey
                         });
 
-                    this.checkNotificationStatus();
-                    triggerAlert("Alerts Activated", "This device is now linked to the atelier core push notification system.", "success");
+                        await client
+                            .from('push_subscriptions')
+                            .insert({
+                                user_id: userSession.user.id,
+                                subscription_json: newSubscription
+                            });
+
+                        this.checkNotificationStatus();
+                        triggerAlert("Alerts Activated", "This device is now linked to the atelier core push notification system.", "success");
+                    }
                 } catch (err) {
                     console.error('Failed to register subscription:', err);
-                    triggerAlert("Link Failure", "Could not complete secure background handshake with server.", "warning");
+                    triggerAlert("Link Failure", "Could not complete secure background handshake: " + err.message, "warning");
                 }
+            },
+
+            urlBase64ToUint8Array(base64String) {
+                const padding = '='.repeat((4 - base64String.length % 4) % 4);
+                const base64 = (base64String + padding).replace(/\-/g, '+').replace(/_/g, '/');
+                const rawData = window.atob(base64);
+                const outputArray = new Uint8Array(rawData.length);
+                for (let i = 0; i < rawData.length; ++i) {
+                    outputArray[i] = rawData.charCodeAt(i);
+                }
+                return outputArray;
             }
-        },
+        };
+    })();
 
-        urlBase64ToUint8Array(base64String) {
-            const padding = '='.repeat((4 - base64String.length % 4) % 4);
-            const base64 = (base64String + padding).replace(/\-/g, '+').replace(/_/g, '/');
-            const rawData = window.atob(base64);
-            const outputArray = new Uint8Array(rawData.length);
-            for (let i = 0; i < rawData.length; ++i) {
-                outputArray[i] = rawData.charCodeAt(i);
-            }
-            return outputArray;
-        }
-    };
-})();
+    document.addEventListener('DOMContentLoaded', () => App.init());
 
-document.addEventListener('DOMContentLoaded', () => App.init());
-
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/sw.js')
-    .then(reg => console.log('SW registered:', reg.scope))
-    .catch(err => console.error('SW failed:', err));
-}
+    // Single cleanly placed SW registration block
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js')
+        .then(reg => console.log('SW registered:', reg.scope))
+        .catch(err => console.error('SW failed:', err));
+    }
     </script>
 </body>
 </html>
