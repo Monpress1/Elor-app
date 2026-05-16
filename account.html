@@ -198,7 +198,6 @@
         </ul>
     </div>
 
-    <!-- PROFILE VIEW -->
     <div class="sub-view" id="profile-view">
         <div class="view-header">
             <a href="javascript:void(0)" onclick="App.closeViews()"><i class="fa-solid fa-arrow-left" style="color:var(--accent-gold); font-size:1.2rem;"></i></a>
@@ -235,7 +234,6 @@
         </div>
     </div>
 
-    <!-- MEASUREMENT VIEW -->
     <div class="sub-view" id="measurement-view">
         <div class="view-header" data-html2canvas-ignore>
             <a href="javascript:void(0)" onclick="App.closeViews()"><i class="fa-solid fa-arrow-left" style="color:var(--accent-gold); font-size:1.2rem;"></i></a>
@@ -288,7 +286,6 @@
         </div>
     </div>
 
-    <!-- ALERTS -->
     <div class="glass-overlay" id="glass-modal">
         <div class="glass-modal">
             <i class="fa-solid fa-gem gm-icon" id="gm-icon"></i>
@@ -531,7 +528,8 @@
                 }
 
                 if (Notification.permission === 'granted') {
-                    const registration = await navigator.serviceWorker.getRegistration();
+                    // Explicitly targeted to match root registration context matching your deployment structure
+                    const registration = await navigator.serviceWorker.getRegistration('/');
                     if (registration && registration.pushManager) {
                         const subscription = await registration.pushManager.getSubscription();
                         if (subscription) {
@@ -547,9 +545,8 @@
             async togglePushNotifications() {
                 if (!userSession) return;
                 
-                // 1. Immediately request permission to preserve user gesture (Crucial for iOS/Safari)
                 if (!('Notification' in window) || !('serviceWorker' in navigator)) {
-                    triggerAlert("Not Supported", "Push notifications are not available on this browser.", "warning");
+                    triggerAlert("Not Supported", "Push notifications are not available on this browser or connection is not secure.", "warning");
                     return;
                 }
 
@@ -565,9 +562,9 @@
                     return;
                 }
 
-                // 2. Fetch Registration SAFELY (replaces the hanging .ready promise)
                 try {
-                    const registration = await navigator.serviceWorker.getRegistration();
+                    // Explicitly look up the service worker registered at the domain root '/'
+                    const registration = await navigator.serviceWorker.getRegistration('/');
 
                     if (!registration || !registration.pushManager) {
                         triggerAlert("Not Ready", "Service Worker is not active yet. Please ensure your site is served over HTTPS and sw.js is linked correctly.", "warning");
@@ -629,11 +626,11 @@
 
     document.addEventListener('DOMContentLoaded', () => App.init());
 
-    // Single cleanly placed SW registration block
+    // Consolidated registration setup targeting root directory context
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('/sw.js')
-        .then(reg => console.log('SW registered:', reg.scope))
-        .catch(err => console.error('SW failed:', err));
+        .then(reg => console.log('SW registered successfully scope:', reg.scope))
+        .catch(err => console.error('SW failed registration handling:', err));
     }
     </script>
 </body>
