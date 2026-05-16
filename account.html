@@ -277,384 +277,403 @@
     </div>
 
     <script>
-       const App = (function() {
-        const DB_URL = 'https://lxtoxjhcdtzuxyirzxpc.supabase.co';
-        const DB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx4dG94amhjZHR6dXh5aXJ6eHBjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwMDU4OTAsImV4cCI6MjA5MTU4MTg5MH0.F5lDJVYUF4aEq8DwkafoWy56I_K6ccpkXiarBJk1LAo'; 
-        const client = window.supabase.createClient(DB_URL, DB_KEY);
-        
-        let userSession = null;
-        let isProfileEdit = false;
-        let isMeasureEdit = false;
+        const App = (function() {
+ const DB_URL = 'https://lxtoxjhcdtzuxyirzxpc.supabase.co';
+ const DB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx4dG94amhjZHR6dXh5aXJ6eHBjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwMDU4OTAsImV4cCI6MjA5MTU4MTg5MH0.F5lDJVYUF4aEq8DwkafoWy56I_K6ccpkXiarBJk1LAo'; 
+ const client = window.supabase.createClient(DB_URL, DB_KEY);
+ 
+ let userSession = null;
+ let isProfileEdit = false;
+ let isMeasureEdit = false;
 
-        function updateStatusBadge(id, isComplete, overrideText = null) {
-            const el = document.getElementById(id);
-            if(el) {
-                if (overrideText) {
-                    el.className = isComplete ? 'status-badge status-complete' : 'status-badge status-incomplete';
-                    el.innerText = overrideText;
-                } else {
-                    if(isComplete) {
-                        el.className = 'status-badge status-complete';
-                        el.innerText = 'Complete';
-                    } else {
-                        el.className = 'status-badge status-incomplete';
-                        el.innerText = 'Incomplete';
-                    }
-                }
-            }
-        }
+ function updateStatusBadge(id, isComplete, overrideText = null) {
+     const el = document.getElementById(id);
+     if(el) {
+         if (overrideText) {
+             el.className = isComplete ? 'status-badge status-complete' : 'status-badge status-incomplete';
+             el.innerText = overrideText;
+         } else {
+             if(isComplete) {
+                 el.className = 'status-badge status-complete';
+                 el.innerText = 'Complete';
+             } else {
+                 el.className = 'status-badge status-incomplete';
+                 el.innerText = 'Incomplete';
+             }
+         }
+     }
+ }
 
-        function triggerAlert(title, text, type="info", confirmCallback=null) {
-            document.getElementById('gm-title').innerText = title;
-            document.getElementById('gm-text').innerText = text;
-            
-            const icon = document.getElementById('gm-icon');
-            icon.className = type === 'warning' ? 'fa-solid fa-triangle-exclamation gm-icon' : (type === 'success' ? 'fa-solid fa-check-double gm-icon' : 'fa-solid fa-gem gm-icon');
-            icon.style.color = type === 'warning' ? 'var(--danger)' : 'var(--accent-gold)';
+ function triggerAlert(title, text, type="info", confirmCallback=null) {
+     document.getElementById('gm-title').innerText = title;
+     document.getElementById('gm-text').innerText = text;
+     
+     const icon = document.getElementById('gm-icon');
+     icon.className = type === 'warning' ? 'fa-solid fa-triangle-exclamation gm-icon' : (type === 'success' ? 'fa-solid fa-check-double gm-icon' : 'fa-solid fa-gem gm-icon');
+     icon.style.color = type === 'warning' ? 'var(--danger)' : 'var(--accent-gold)';
 
-            const modal = document.getElementById('glass-modal');
-            const btnCancel = document.getElementById('gm-cancel');
-            const btnConfirm = document.getElementById('gm-confirm');
+     const modal = document.getElementById('glass-modal');
+     const btnCancel = document.getElementById('gm-cancel');
+     const btnConfirm = document.getElementById('gm-confirm');
 
-            if (confirmCallback) {
-                btnCancel.style.display = 'block';
-                btnConfirm.innerText = 'Confirm';
-                btnConfirm.onclick = () => { modal.classList.remove('active'); confirmCallback(); };
-            } else {
-                btnCancel.style.display = 'none';
-                btnConfirm.innerText = 'Understood';
-                btnConfirm.onclick = () => { modal.classList.remove('active'); };
-            }
-            
-            btnCancel.onclick = () => modal.classList.remove('active');
-            modal.classList.add('active');
-        }
+     if (confirmCallback) {
+         btnCancel.style.display = 'block';
+         btnConfirm.innerText = 'Confirm';
+         btnConfirm.onclick = () => { modal.classList.remove('active'); confirmCallback(); };
+     } else {
+         btnCancel.style.display = 'none';
+         btnConfirm.innerText = 'Understood';
+         btnConfirm.onclick = () => { modal.classList.remove('active'); };
+     }
+     
+     btnCancel.onclick = () => modal.classList.remove('active');
+     modal.classList.add('active');
+ }
 
-        return {
-            async init() {
-                const { data: { session } } = await client.auth.getSession();
-                if (!session) {
-                    window.location.href = 'auth.html';
-                    return;
-                }
-                userSession = session;
-                
-                const meta = session.user.user_metadata || {};
-                const firstName = meta.first_name || 'Mogul';
-                const lastName = meta.last_name || '';
-                
-                document.getElementById('userName').innerText = `${firstName} ${lastName}`.trim();
-                document.getElementById('p_firstName').value = firstName;
-                document.getElementById('p_lastName').value = lastName;
+ return {
+     async init() {
+         const { data: { session } } = await client.auth.getSession();
+         if (!session) {
+             window.location.href = 'auth.html';
+             return;
+         }
+         userSession = session;
+         
+         const meta = session.user.user_metadata || {};
+         const firstName = meta.first_name || 'Mogul';
+         const lastName = meta.last_name || '';
+         
+         document.getElementById('userName').innerText = `${firstName} ${lastName}`.trim();
+         document.getElementById('p_firstName').value = firstName;
+         document.getElementById('p_lastName').value = lastName;
 
-                await this.loadData();
-                await this.checkNotificationStatus();
-            },
+         await this.loadData();
+         await this.checkNotificationStatus();
+     },
 
-            async loadData() {
-                const { data } = await client.from('profiles').select('*').eq('id', userSession.user.id).single();
-                if (data) {
-                    document.getElementById('p_delivery').value = data.shipping_address || '';
-                    document.getElementById('p_residential').value = data.residential_address || '';
-                    document.getElementById('p_phone').value = data.phone || '';
-                    document.getElementById('p_whatsapp').value = data.whatsapp_number || '';
+     async loadData() {
+         const { data } = await client.from('profiles').select('*').eq('id', userSession.user.id).single();
+         if (data) {
+             document.getElementById('p_delivery').value = data.shipping_address || '';
+             document.getElementById('p_residential').value = data.residential_address || '';
+             document.getElementById('p_phone').value = data.phone || '';
+             document.getElementById('p_whatsapp').value = data.whatsapp_number || '';
 
-                    const pComplete = !!(data.shipping_address && data.residential_address && data.phone);
-                    updateStatusBadge('badge-profile', pComplete);
+             const pComplete = !!(data.shipping_address && data.residential_address && data.phone);
+             updateStatusBadge('badge-profile', pComplete);
 
-                    const m = data.measurements || {};
-                    document.getElementById('m_chest').value = m.chest || '';
-                    document.getElementById('m_neck').value = m.neck || '';
-                    document.getElementById('m_shirt_length').value = m.shirt_length || '';
-                    document.getElementById('m_sleeve').value = m.sleeve || '';
-                    document.getElementById('m_trouser_length').value = m.trouser_length || '';
-                    document.getElementById('m_waist').value = m.waist || '';
-                    document.getElementById('m_thigh').value = m.thigh || '';
+             const m = data.measurements || {};
+             document.getElementById('m_chest').value = m.chest || '';
+             document.getElementById('m_neck').value = m.neck || '';
+             document.getElementById('m_shirt_length').value = m.shirt_length || '';
+             document.getElementById('m_sleeve').value = m.sleeve || '';
+             document.getElementById('m_trouser_length').value = m.trouser_length || '';
+             document.getElementById('m_waist').value = m.waist || '';
+             document.getElementById('m_thigh').value = m.thigh || '';
 
-                    const mComplete = !!(m.chest && m.neck && m.shirt_length && m.sleeve && m.trouser_length && m.waist && m.thigh_circumference);
-                    updateStatusBadge('badge-measurements', mComplete);
-                } else {
-                    updateStatusBadge('badge-profile', false);
-                    updateStatusBadge('badge-measurements', false);
-                }
-            },
+             const mComplete = !!(m.chest && m.neck && m.shirt_length && m.sleeve && m.trouser_length && m.waist && m.thigh_circumference);
+             updateStatusBadge('badge-measurements', mComplete);
+         } else {
+             updateStatusBadge('badge-profile', false);
+             updateStatusBadge('badge-measurements', false);
+         }
+     },
 
-            openView(id) {
-                document.getElementById(id).style.display = 'block';
-                window.scrollTo(0, 0);
-            },
+     openView(id) {
+         document.getElementById(id).style.display = 'block';
+         window.scrollTo(0, 0);
+     },
 
-            closeViews() {
-                document.querySelectorAll('.sub-view').forEach(v => v.style.display = 'none');
-                if(isProfileEdit) this.toggleEditMode('profile');
-                if(isMeasureEdit) this.toggleEditMode('measure');
-                this.loadData();
-            },
+     closeViews() {
+         document.querySelectorAll('.sub-view').forEach(v => v.style.display = 'none');
+         if(isProfileEdit) this.toggleEditMode('profile');
+         if(isMeasureEdit) this.toggleEditMode('measure');
+         this.loadData();
+     },
 
-            toggleEditMode(type) {
-                if(type === 'profile') {
-                    isProfileEdit = !isProfileEdit;
-                    const inputs = document.querySelectorAll('.p-input');
-                    inputs.forEach(input => {
-                        if(input.id !== 'p_firstName' && input.id !== 'p_lastName') {
-                            input.disabled = !isProfileEdit;
-                        }
-                    });
-                    document.getElementById('btn-save-profile').style.display = isProfileEdit ? 'block' : 'none';
-                    document.getElementById('btn-edit-profile').innerHTML = isProfileEdit ? '<i class="fa-solid fa-xmark"></i> Cancel' : '<i class="fa-solid fa-pen"></i> Edit';
-                } else {
-                    isMeasureEdit = !isMeasureEdit;
-                    document.querySelectorAll('.m-input').forEach(i => i.disabled = !isMeasureEdit);
-                    document.getElementById('btn-save-measure').style.display = isMeasureEdit ? 'block' : 'none';
-                    document.getElementById('btn-edit-measure').innerHTML = isMeasureEdit ? '<i class="fa-solid fa-xmark"></i> Cancel' : '<i class="fa-solid fa-pen"></i> Edit';
-                    
-                    if(!isMeasureEdit) {
-                        document.getElementById('guide-img').style.display = 'none';
-                        document.getElementById('guide-text').style.display = 'block';
-                    }
-                }
-            },
+     toggleEditMode(type) {
+         if(type === 'profile') {
+             isProfileEdit = !isProfileEdit;
+             const inputs = document.querySelectorAll('.p-input');
+             inputs.forEach(input => {
+                 if(input.id !== 'p_firstName' && input.id !== 'p_lastName') {
+                     input.disabled = !isProfileEdit;
+                 }
+             });
+             document.getElementById('btn-save-profile').style.display = isProfileEdit ? 'block' : 'none';
+             document.getElementById('btn-edit-profile').innerHTML = isProfileEdit ? '<i class="fa-solid fa-xmark"></i> Cancel' : '<i class="fa-solid fa-pen"></i> Edit';
+         } else {
+             isMeasureEdit = !isMeasureEdit;
+             document.querySelectorAll('.m-input').forEach(i => i.disabled = !isMeasureEdit);
+             document.getElementById('btn-save-measure').style.display = isMeasureEdit ? 'block' : 'none';
+             document.getElementById('btn-edit-measure').innerHTML = isMeasureEdit ? '<i class="fa-solid fa-xmark"></i> Cancel' : '<i class="fa-solid fa-pen"></i> Edit';
+             
+             if(!isMeasureEdit) {
+                 document.getElementById('guide-img').style.display = 'none';
+                 document.getElementById('guide-text').style.display = 'block';
+             }
+         }
+     },
 
-            showGuide(imgSrc) {
-                if(!isMeasureEdit) return; 
-                document.getElementById('guide-text').style.display = 'none';
-                const img = document.getElementById('guide-img');
-                img.src = imgSrc;
-                img.style.display = 'block';
-            },
+     showGuide(imgSrc) {
+         if(!isMeasureEdit) return; 
+         document.getElementById('guide-text').style.display = 'none';
+         const img = document.getElementById('guide-img');
+         img.src = imgSrc;
+         img.style.display = 'block';
+     },
 
-            async saveProfile() {
-                const payload = {
-                    id: userSession.user.id,
-                    shipping_address: document.getElementById('p_delivery').value,
-                    residential_address: document.getElementById('p_residential').value,
-                    phone: document.getElementById('p_phone').value,
-                    whatsapp_number: document.getElementById('p_whatsapp').value,
-                };
+     async saveProfile() {
+         const payload = {
+             id: userSession.user.id,
+             shipping_address: document.getElementById('p_delivery').value,
+             residential_address: document.getElementById('p_residential').value,
+             phone: document.getElementById('p_phone').value,
+             whatsapp_number: document.getElementById('p_whatsapp').value,
+         };
 
-                const { error } = await client.from('profiles').upsert(payload);
-                if (error) {
-                    triggerAlert("Update Failed", error.message, "warning");
-                } else {
-                    triggerAlert("Profile Secured", "Your shipping and contact details have been elegantly updated.", "success");
-                    this.toggleEditMode('profile');
-                }
-            },
+         const { error } = await client.from('profiles').upsert(payload);
+         if (error) {
+             triggerAlert("Update Failed", error.message, "warning");
+         } else {
+             triggerAlert("Profile Secured", "Your shipping and contact details have been elegantly updated.", "success");
+             this.toggleEditMode('profile');
+         }
+     },
 
-            async saveMeasurements() {
-                const { data: existing } = await client.from('profiles').select('*').eq('id', userSession.user.id).single();
-                
-                const payload = {
-                    id: userSession.user.id,
-                    measurements: {
-                        ...(existing?.measurements || {}),
-                        chest: document.getElementById('m_chest').value,
-                        neck: document.getElementById('m_neck').value,
-                        shirt_length: document.getElementById('m_shirt_length').value,
-                        sleeve: document.getElementById('m_sleeve').value,
-                        trouser_length: document.getElementById('m_trouser_length').value,
-                        waist: document.getElementById('m_waist').value,
-                        thigh_circumference: document.getElementById('m_thigh').value,
-                    }
-                };
+     async saveMeasurements() {
+         const { data: existing } = await client.from('profiles').select('*').eq('id', userSession.user.id).single();
+         
+         const payload = {
+             id: userSession.user.id,
+             measurements: {
+                 ...(existing?.measurements || {}),
+                 chest: document.getElementById('m_chest').value,
+                 neck: document.getElementById('m_neck').value,
+                 shirt_length: document.getElementById('m_shirt_length').value,
+                 sleeve: document.getElementById('m_sleeve').value,
+                 trouser_length: document.getElementById('m_trouser_length').value,
+                 waist: document.getElementById('m_waist').value,
+                 thigh_circumference: document.getElementById('m_thigh').value,
+             }
+         };
 
-                const { error } = await client.from('profiles').upsert(payload);
-                if (error) {
-                    triggerAlert("Update Failed", error.message, "warning");
-                } else {
-                    triggerAlert("Measurements Secured", "Your bespoke blueprint has been recorded successfully.", "success");
-                    this.toggleEditMode('measure');
-                }
-            },
+         const { error } = await client.from('profiles').upsert(payload);
+         if (error) {
+             triggerAlert("Update Failed", error.message, "warning");
+         } else {
+             triggerAlert("Measurements Secured", "Your bespoke blueprint has been recorded successfully.", "success");
+             this.toggleEditMode('measure');
+         }
+     },
 
-            exportToImage() {
-                const target = document.getElementById('export-target');
-                const wasEditing = isMeasureEdit;
-                if(wasEditing) this.toggleEditMode('measure');
+     exportToImage() {
+         const target = document.getElementById('export-target');
+         const wasEditing = isMeasureEdit;
+         if(wasEditing) this.toggleEditMode('measure');
 
-                html2canvas(target, { backgroundColor: '#050505', scale: 2 }).then(canvas => {
-                    const link = document.createElement('a');
-                    link.download = `ELOR_Measurements_${document.getElementById('p_firstName').value}.png`;
-                    link.href = canvas.toDataURL('image/png');
-                    link.click();
-                    
-                    triggerAlert("Export Complete", "Your measurement dossier has been saved to your device.", "success");
-                    if(wasEditing) this.toggleEditMode('measure');
-                });
-            },
+         html2canvas(target, { backgroundColor: '#050505', scale: 2 }).then(canvas => {
+             const link = document.createElement('a');
+             link.download = `ELOR_Measurements_${document.getElementById('p_firstName').value}.png`;
+             link.href = canvas.toDataURL('image/png');
+             link.click();
+             
+             triggerAlert("Export Complete", "Your measurement dossier has been saved to your device.", "success");
+             if(wasEditing) this.toggleEditMode('measure');
+         });
+     },
 
-            confirmLogout() {
-                triggerAlert("Departing?", "Are you sure you wish to log out of your atelier account?", "warning", async () => {
-                    await client.auth.signOut();
-                    window.location.href = 'index.html';
-                });
-            },
+     confirmLogout() {
+         triggerAlert("Departing?", "Are you sure you wish to log out of your atelier account?", "warning", async () => {
+             await client.auth.signOut();
+             window.location.href = 'index.html';
+         });
+     },
 
-            confirmDelete() {
-                triggerAlert("Severe Action", "Are you entirely sure you want to permanently delete your ELOR account and all bespoke records? This cannot be undone.", "warning", async () => {
-                    triggerAlert("Request Sent", "Your account deletion request has been forwarded to the atelier masters. You will be logged out.", "info", async () => {
-                        await client.auth.signOut();
-                        window.location.href = 'index.html';
-                    });
-                });
-            },
+     confirmDelete() {
+         triggerAlert("Severe Action", "Are you entirely sure you want to permanently delete your ELOR account and all bespoke records? This cannot be undone.", "warning", async () => {
+             triggerAlert("Request Sent", "Your account deletion request has been forwarded to the atelier masters. You will be logged out.", "info", async () => {
+                 await client.auth.signOut();
+                 window.location.href = 'index.html';
+             });
+         });
+     },
 
-            async checkNotificationStatus() {
-                if (!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) {
-                    updateStatusBadge('badge-notifications', false, 'Unsupported');
-                    return;
-                }
+     async checkNotificationStatus() {
+         if (!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) {
+             updateStatusBadge('badge-notifications', false, 'Unsupported');
+             return;
+         }
 
-                if (Notification.permission === 'granted') {
-                    try {
-                        const registration = await navigator.serviceWorker.ready;
-                        if (registration && registration.pushManager) {
-                            const subscription = await registration.pushManager.getSubscription();
-                            if (subscription) {
-                                updateStatusBadge('badge-notifications', true, 'Enabled');
-                                return;
-                            }
-                        }
-                    } catch(e) {}
-                } 
-                updateStatusBadge('badge-notifications', false, 'Disabled');
-            },
+         if (Notification.permission === 'granted') {
+             try {
+                 const registrations = await navigator.serviceWorker.getRegistrations();
+                 if (registrations.length > 0 && registrations[0].pushManager) {
+                     const subscription = await registrations[0].pushManager.getSubscription();
+                     if (subscription) {
+                         updateStatusBadge('badge-notifications', true, 'Enabled');
+                         return;
+                     }
+                 }
+             } catch(e) {}
+         } 
+         updateStatusBadge('badge-notifications', false, 'Disabled');
+     },
 
-            async togglePushNotifications() {
-                // Instantly construct an alert string log to output step-by-step variables
-                let traceLog = ["🔍 --- PWA MOBILE TRACE START ---"];
-                
-                try {
-                    traceLog.push(`1. User Session Active: ${!!userSession}`);
-                    traceLog.push(`2. SW in navigator: ${'serviceWorker' in navigator}`);
-                    traceLog.push(`3. PushManager in window: ${'PushManager' in window}`);
-                    traceLog.push(`4. Notification in window: ${'Notification' in window}`);
-                    traceLog.push(`5. Initial Permissions State: ${Notification.permission}`);
+     async togglePushNotifications() {
+         let traceLog = ["🔍 --- PWA MOBILE TRACE START ---"];
+         
+         try {
+             traceLog.push(`1. User Session Active: ${!!userSession}`);
+             traceLog.push(`2. SW in navigator: ${'serviceWorker' in navigator}`);
+             traceLog.push(`3. PushManager in window: ${'PushManager' in window}`);
+             traceLog.push(`4. Notification in window: ${'Notification' in window}`);
+             traceLog.push(`5. Initial Permissions State: ${Notification.permission}`);
 
-                    if (!('Notification' in window) || !('serviceWorker' in navigator)) {
-                        traceLog.push("❌ CRITICAL: Engine components missing from browser window context.");
-                        alert(traceLog.join("\n"));
-                        return;
-                    }
+             if (!('Notification' in window) || !('serviceWorker' in navigator)) {
+                 traceLog.push("❌ CRITICAL: Engine components missing from browser window context.");
+                 alert(traceLog.join("\n"));
+                 return;
+             }
 
-                    // Scan structural configuration registrations
-                    const activeRegs = await navigator.serviceWorker.getRegistrations();
-                    traceLog.push(`6. Registrations Count: ${activeRegs.length}`);
-                    activeRegs.forEach((r, idx) => {
-                        traceLog.push(`   [Reg ${idx}]: scope=${r.scope}, active=${!!r.active}, installing=${!!r.installing}, waiting=${!!r.waiting}`);
-                    });
+             // Scan structural configuration registrations
+             let activeRegs = await navigator.serviceWorker.getRegistrations();
+             traceLog.push(`6. Registrations Count: ${activeRegs.length}`);
 
-                    if (Notification.permission === 'default') {
-                        traceLog.push("7. Requesting Notification Permissions natively...");
-                        const permission = await Notification.requestPermission();
-                        traceLog.push(`   -> Result: ${permission}`);
-                        if (permission !== 'granted') {
-                            alert(traceLog.join("\n") + "\n❌ Native privilege token declined.");
-                            this.checkNotificationStatus();
-                            return;
-                        }
-                    } else if (Notification.permission === 'denied') {
-                        alert(traceLog.join("\n") + "\n❌ Absolute block found inside internal browser configuration.");
-                        return;
-                    }
+             // SELF-HEALING EMERGENCY INJECTION
+             if (activeRegs.length === 0) {
+                 traceLog.push("⚠️ Warning: 0 registrations found. Triggering on-the-fly emergency registration...");
+                 const emergencyReg = await navigator.serviceWorker.register('/sw.js');
+                 traceLog.push(`✅ Emergency registration queued! Scope: ${emergencyReg.scope}`);
+                 // Give the browser a brief moment to map the instance
+                 await new Promise(r => setTimeout(r, 1200));
+                 activeRegs = [emergencyReg];
+             }
 
-                    traceLog.push("8. Instigating navigator.serviceWorker.ready race condition...");
-                    
-                    // Prevent infinite stalls on hanging promises with a 12 second timeout race
-                    const readyPromise = navigator.serviceWorker.ready;
-                    const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("SW Ready state tracking exceeded 12 second maximum limit.")), 12000));
-                    
-                    const registration = await Promise.race([readyPromise, timeoutPromise]);
-                    traceLog.push("9. ServiceWorker.ready resolved successfully.");
-                    traceLog.push(`10. pushManager defined inside worker: ${!!registration.pushManager}`);
+             activeRegs.forEach((r, idx) => {
+                 traceLog.push(`   [Reg ${idx}]: scope=${r.scope}, active=${!!r.active}, installing=${!!r.installing}, waiting=${!!r.waiting}`);
+             });
 
-                    if (!registration || !registration.pushManager) {
-                        alert(traceLog.join("\n") + "\n❌ pushManager instance missing or inaccessible inside container root.");
-                        return;
-                    }
+             if (Notification.permission === 'default') {
+                 traceLog.push("7. Requesting Notification Permissions natively...");
+                 const permission = await Notification.requestPermission();
+                 traceLog.push(`   -> Result: ${permission}`);
+                 if (permission !== 'granted') {
+                     alert(traceLog.join("\n") + "\n❌ Native privilege token declined.");
+                     this.checkNotificationStatus();
+                     return;
+                 }
+             } else if (Notification.permission === 'denied') {
+                 alert(traceLog.join("\n") + "\n❌ Absolute block found inside internal browser configuration.");
+                 return;
+             }
 
-                    traceLog.push("11. Querying background manager subscription instances...");
-                    const existingSubscription = await registration.pushManager.getSubscription();
-                    traceLog.push(`12. Existing active registration found: ${!!existingSubscription}`);
+             traceLog.push("8. Instigating navigator.serviceWorker.ready race condition...");
+             
+             const readyPromise = navigator.serviceWorker.ready;
+             const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("SW Ready state tracking exceeded 12 second maximum limit.")), 12000));
+             
+             const registration = await Promise.race([readyPromise, timeoutPromise]);
+             traceLog.push("9. ServiceWorker.ready resolved successfully.");
+             traceLog.push(`10. pushManager defined inside worker: ${!!registration.pushManager}`);
 
-                    if (existingSubscription) {
-                        traceLog.push("13. Proceeding to tear down active registration logic...");
-                        await existingSubscription.unsubscribe();
-                        traceLog.push("14. Subscription object unlinked cleanly from endpoint.");
-                        
-                        const { error: delErr } = await client
-                            .from('push_subscriptions')
-                            .delete()
-                            .eq('user_id', userSession.user.id)
-                            .like('subscription_json->>endpoint', existingSubscription.endpoint);
+             if (!registration || !registration.pushManager) {
+                 alert(traceLog.join("\n") + "\n❌ pushManager instance missing or inaccessible inside container root.");
+                 return;
+             }
 
-                        if(delErr) traceLog.push(`⚠️ Supabase removal warning: ${delErr.message}`);
-                        else traceLog.push("15. DB storage vector synchronized successfully.");
+             traceLog.push("11. Querying background manager subscription instances...");
+             const existingSubscription = await registration.pushManager.getSubscription();
+             traceLog.push(`12. Existing active registration found: ${!!existingSubscription}`);
 
-                        this.checkNotificationStatus();
-                        alert(traceLog.join("\n") + "\n✅ Background push channels terminated cleanly.");
-                    } else {
-                        traceLog.push("13. Compiling VAPID key payload mapping sequence...");
-                        const VAPID_PUBLIC_KEY = 'BAkq_2ZCp335lLLytu54Wsv7RDDhHYgz21DMHQ1Np-6RKR-VcpzxNaJ4HNGUKT25jNf6J_T9s1hh8mUGWTBXax8';
-                        const convertedKey = this.urlBase64ToUint8Array(VAPID_PUBLIC_KEY);
-                        traceLog.push("14. Binary array conversion execution complete.");
+             if (existingSubscription) {
+                 traceLog.push("13. Proceeding to tear down active registration logic...");
+                 await existingSubscription.unsubscribe();
+                 traceLog.push("14. Subscription object unlinked cleanly from endpoint.");
+                 
+                 const { error: delErr } = await client
+                     .from('push_subscriptions')
+                     .delete()
+                     .eq('user_id', userSession.user.id)
+                     .like('subscription_json->>endpoint', existingSubscription.endpoint);
 
-                        traceLog.push("15. Spawning pushManager subscribe payload network process...");
-                        const newSubscription = await registration.pushManager.subscribe({
-                            userVisibleOnly: true,
-                            applicationServerKey: convertedKey
-                        });
-                        traceLog.push("16. Cryptographic device handshake achieved successfully.");
+                 if(delErr) traceLog.push(`⚠️ Supabase removal warning: ${delErr.message}`);
+                 else traceLog.push("15. DB storage vector synchronized successfully.");
 
-                        const { error: insErr } = await client
-                            .from('push_subscriptions')
-                            .insert({
-                                user_id: userSession.user.id,
-                                subscription_json: newSubscription
-                            });
+                 this.checkNotificationStatus();
+                 alert(traceLog.join("\n") + "\n✅ Background push channels terminated cleanly.");
+             } else {
+                 traceLog.push("13. Compiling VAPID key payload mapping sequence...");
+                 const VAPID_PUBLIC_KEY = 'BAkq_2ZCp335lLLytu54Wsv7RDDhHYgz21DMHQ1Np-6RKR-VcpzxNaJ4HNGUKT25jNf6J_T9s1hh8mUGWTBXax8';
+                 const convertedKey = this.urlBase64ToUint8Array(VAPID_PUBLIC_KEY);
+                 traceLog.push("14. Binary array conversion execution complete.");
 
-                        if(insErr) {
-                            traceLog.push(`❌ Supabase Sync Failure: ${insErr.message}`);
-                            alert(traceLog.join("\n"));
-                            return;
-                        }
-                        traceLog.push("17. Handshake records written to core cloud architecture.");
+                 traceLog.push("15. Spawning pushManager subscribe payload network process...");
+                 const newSubscription = await registration.pushManager.subscribe({
+                     userVisibleOnly: true,
+                     applicationServerKey: convertedKey
+                 });
+                 traceLog.push("16. Cryptographic device handshake achieved successfully.");
 
-                        this.checkNotificationStatus();
-                        alert(traceLog.join("\n") + "\n✅ Complete mobile registration pipe completely operational!");
-                    }
-                } catch (err) {
-                    traceLog.push(`\n💥 FATAL CRASH INTERCEPTED: ${err.name} - ${err.message}`);
-                    if(err.stack) traceLog.push(`Stack: ${err.stack.toString().substring(0, 300)}`);
-                    alert(traceLog.join("\n"));
-                }
-            },
+                 const { error: insErr } = await client
+                     .from('push_subscriptions')
+                     .insert({
+                         user_id: userSession.user.id,
+                         subscription_json: newSubscription
+                     });
 
-            urlBase64ToUint8Array(base64String) {
-                const padding = '='.repeat((4 - base64String.length % 4) % 4);
-                const base64 = (base64String + padding).replace(/\-/g, '+').replace(/_/g, '/');
-                const rawData = window.atob(base64);
-                const outputArray = new Uint8Array(rawData.length);
-                for (let i = 0; i < rawData.length; ++i) {
-                    outputArray[i] = rawData.charCodeAt(i);
-                }
-                return outputArray;
-            }
-        };
-    })();
+                 if(insErr) {
+                     traceLog.push(`❌ Supabase Sync Failure: ${insErr.message}`);
+                     alert(traceLog.join("\n"));
+                     return;
+                 }
+                 traceLog.push("17. Handshake records written to core cloud architecture.");
 
-    document.addEventListener('DOMContentLoaded', () => App.init());
+                 this.checkNotificationStatus();
+                 alert(traceLog.join("\n") + "\n✅ Complete mobile registration pipe completely operational!");
+             }
+         } catch (err) {
+             traceLog.push(`\n💥 FATAL CRASH INTERCEPTED: ${err.name} - ${err.message}`);
+             if(err.stack) traceLog.push(`Stack: ${err.stack.toString().substring(0, 300)}`);
+             alert(traceLog.join("\n"));
+         }
+     },
 
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-         navigator.serviceWorker.register('/sw.js')
-           .then(reg => {
-               console.log('SW successfully activated scope:', reg.scope);
-               reg.update(); 
-           })
-           .catch(err => alert('🔴 CRITICAL SW REGISTRATION SCRIPT REJECTION:\n' + err.message));
-      });
-    }
+     urlBase64ToUint8Array(base64String) {
+         const padding = '='.repeat((4 - base64String.length % 4) % 4);
+         const base64 = (base64String + padding).replace(/\-/g, '+').replace(/_/g, '/');
+         const rawData = window.atob(base64);
+         const outputArray = new Uint8Array(rawData.length);
+         for (let i = 0; i < rawData.length; ++i) {
+             outputArray[i] = rawData.charCodeAt(i);
+         }
+         return outputArray;
+     }
+ };
+})();
+
+document.addEventListener('DOMContentLoaded', () => App.init());
+
+// BULLETPROOF REGISTRATION WRAPPER
+if ('serviceWorker' in navigator) {
+ const triggerRegistration = () => {
+     navigator.serviceWorker.register('/sw.js')
+       .then(reg => {
+           console.log('SW successfully activated scope:', reg.scope);
+           reg.update(); 
+       })
+       .catch(err => alert('🔴 CRITICAL SW REGISTRATION SCRIPT REJECTION:\n' + err.message));
+ };
+
+ // If page is already fully loaded, register immediately. Do not wait for an event that already passed.
+ if (document.readyState === 'complete' || document.readyState === 'interactive') {
+     triggerRegistration();
+ } else {
+     window.addEventListener('load', triggerRegistration);
+ }
+}
+
     </script>
 </body>
 </html>
+
