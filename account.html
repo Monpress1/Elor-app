@@ -25,7 +25,6 @@
         * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body { background-color: var(--bg-deep); color: var(--text-main); font-family: 'Montserrat', sans-serif; overflow-x: hidden; }
 
-        /* --- HEADER & GREETING --- */
         .header { padding: 20px; display: flex; align-items: center; justify-content: space-between; }
         .header a { color: var(--accent-gold); text-decoration: none; font-size: 1.2rem; transition: 0.3s; }
         .logo { font-family: 'Playfair Display', serif; font-size: 1.5rem; letter-spacing: 3px; font-weight: 700; color: var(--accent-gold); }
@@ -37,7 +36,6 @@
             background: linear-gradient(90deg, transparent, var(--accent-gold), transparent); 
         }
 
-        /* --- MAIN MENU --- */
         .container { padding: 0 20px; max-width: 600px; margin: 0 auto; position: relative; }
         
         .menu-list { list-style: none; display: flex; flex-direction: column; gap: 15px; }
@@ -58,7 +56,6 @@
         .danger-item .menu-left i { color: var(--danger); }
         .danger-item:hover { border-color: var(--danger); }
 
-        /* --- SUB VIEWS (PROFILE & MEASUREMENTS) --- */
         .sub-view {
             display: none; position: absolute; top: 0; left: 0; width: 100%; min-height: 100vh;
             background: var(--bg-deep); z-index: 10; padding: 20px; animation: slideIn 0.3s forwards;
@@ -104,7 +101,6 @@
 
         .btn-submit { width: 100%; padding: 16px; background: var(--accent-gold); color: #000; border: none; border-radius: 8px; font-weight: 600; text-transform: uppercase; letter-spacing: 2px; cursor: pointer; display: none; margin-top: 10px; }
 
-        /* --- GLASSMORPHISM ALERTS --- */
         .glass-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 9999;
             background: rgba(0,0,0,0.7); backdrop-filter: blur(8px);
@@ -510,91 +506,127 @@
                 }
 
                 if (Notification.permission === 'granted') {
-                    const registration = await navigator.serviceWorker.getRegistration('/');
-                    if (registration && registration.pushManager) {
-                        const subscription = await registration.pushManager.getSubscription();
-                        if (subscription) {
-                            updateStatusBadge('badge-notifications', true, 'Enabled');
-                            return;
+                    try {
+                        const registration = await navigator.serviceWorker.ready;
+                        if (registration && registration.pushManager) {
+                            const subscription = await registration.pushManager.getSubscription();
+                            if (subscription) {
+                                updateStatusBadge('badge-notifications', true, 'Enabled');
+                                return;
+                            }
                         }
-                    }
+                    } catch(e) {}
                 } 
-                
                 updateStatusBadge('badge-notifications', false, 'Disabled');
             },
 
             async togglePushNotifications() {
-                if (!userSession) return;
+                // Instantly construct an alert string log to output step-by-step variables
+                let traceLog = ["🔍 --- PWA MOBILE TRACE START ---"];
                 
-                if (!('Notification' in window) || !('serviceWorker' in navigator)) {
-                    triggerAlert("Not Supported", "Push notifications are not available on this browser or connection is not secure.", "warning");
-                    return;
-                }
+                try {
+                    traceLog.push(`1. User Session Active: ${!!userSession}`);
+                    traceLog.push(`2. SW in navigator: ${'serviceWorker' in navigator}`);
+                    traceLog.push(`3. PushManager in window: ${'PushManager' in window}`);
+                    traceLog.push(`4. Notification in window: ${'Notification' in window}`);
+                    traceLog.push(`5. Initial Permissions State: ${Notification.permission}`);
 
-                if (Notification.permission === 'default') {
-                    const permission = await Notification.requestPermission();
-                    if (permission !== 'granted') {
-                        triggerAlert("Permission Denied", "Please allow notification privileges in your device or browser settings manually.", "warning");
-                        this.checkNotificationStatus();
+                    if (!('Notification' in window) || !('serviceWorker' in navigator)) {
+                        traceLog.push("❌ CRITICAL: Engine components missing from browser window context.");
+                        alert(traceLog.join("\n"));
                         return;
                     }
-                } else if (Notification.permission === 'denied') {
-                    triggerAlert("Permission Denied", "Notifications are blocked. Please enable them in your browser settings.", "warning");
-                    return;
-                }
 
-                try {
-                    // ASYNC RETRY LOOP: Give the browser up to 3 seconds to spin up the worker 
-                    // and register properly out of the temporary locked state after permissions change.
-                    let registration = null;
-                    for (let i = 0; i < 6; i++) {
-                        registration = await navigator.serviceWorker.getRegistration('/');
-                        if (registration) break;
-                        await new Promise(resolve => setTimeout(resolve, 500)); // wait 500ms
+                    // Scan structural configuration registrations
+                    const activeRegs = await navigator.serviceWorker.getRegistrations();
+                    traceLog.push(`6. Registrations Count: ${activeRegs.length}`);
+                    activeRegs.forEach((r, idx) => {
+                        traceLog.push(`   [Reg ${idx}]: scope=${r.scope}, active=${!!r.active}, installing=${!!r.installing}, waiting=${!!r.waiting}`);
+                    });
+
+                    if (Notification.permission === 'default') {
+                        traceLog.push("7. Requesting Notification Permissions natively...");
+                        const permission = await Notification.requestPermission();
+                        traceLog.push(`   -> Result: ${permission}`);
+                        if (permission !== 'granted') {
+                            alert(traceLog.join("\n") + "\n❌ Native privilege token declined.");
+                            this.checkNotificationStatus();
+                            return;
+                        }
+                    } else if (Notification.permission === 'denied') {
+                        alert(traceLog.join("\n") + "\n❌ Absolute block found inside internal browser configuration.");
+                        return;
                     }
+
+                    traceLog.push("8. Instigating navigator.serviceWorker.ready race condition...");
+                    
+                    // Prevent infinite stalls on hanging promises with a 12 second timeout race
+                    const readyPromise = navigator.serviceWorker.ready;
+                    const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("SW Ready state tracking exceeded 12 second maximum limit.")), 12000));
+                    
+                    const registration = await Promise.race([readyPromise, timeoutPromise]);
+                    traceLog.push("9. ServiceWorker.ready resolved successfully.");
+                    traceLog.push(`10. pushManager defined inside worker: ${!!registration.pushManager}`);
 
                     if (!registration || !registration.pushManager) {
-                        triggerAlert("Not Ready", "Service Worker is not active yet. Please ensure your site is served over HTTPS and sw.js is linked correctly.", "warning");
+                        alert(traceLog.join("\n") + "\n❌ pushManager instance missing or inaccessible inside container root.");
                         return;
                     }
 
+                    traceLog.push("11. Querying background manager subscription instances...");
                     const existingSubscription = await registration.pushManager.getSubscription();
+                    traceLog.push(`12. Existing active registration found: ${!!existingSubscription}`);
 
                     if (existingSubscription) {
-                        triggerAlert("Disable Alerts?", "Are you sure you want to stop receiving immediate native style push notifications?", "warning", async () => {
-                            await existingSubscription.unsubscribe();
-                            
-                            await client
-                                .from('push_subscriptions')
-                                .delete()
-                                .eq('user_id', userSession.user.id)
-                                .like('subscription_json->>endpoint', existingSubscription.endpoint);
+                        traceLog.push("13. Proceeding to tear down active registration logic...");
+                        await existingSubscription.unsubscribe();
+                        traceLog.push("14. Subscription object unlinked cleanly from endpoint.");
+                        
+                        const { error: delErr } = await client
+                            .from('push_subscriptions')
+                            .delete()
+                            .eq('user_id', userSession.user.id)
+                            .like('subscription_json->>endpoint', existingSubscription.endpoint);
 
-                            this.checkNotificationStatus();
-                            triggerAlert("Alerts Silenced", "You will no longer receive push notifications on this browser.", "success");
-                        });
+                        if(delErr) traceLog.push(`⚠️ Supabase removal warning: ${delErr.message}`);
+                        else traceLog.push("15. DB storage vector synchronized successfully.");
+
+                        this.checkNotificationStatus();
+                        alert(traceLog.join("\n") + "\n✅ Background push channels terminated cleanly.");
                     } else {
+                        traceLog.push("13. Compiling VAPID key payload mapping sequence...");
                         const VAPID_PUBLIC_KEY = 'BAkq_2ZCp335lLLytu54Wsv7RDDhHYgz21DMHQ1Np-6RKR-VcpzxNaJ4HNGUKT25jNf6J_T9s1hh8mUGWTBXax8';
                         const convertedKey = this.urlBase64ToUint8Array(VAPID_PUBLIC_KEY);
+                        traceLog.push("14. Binary array conversion execution complete.");
 
+                        traceLog.push("15. Spawning pushManager subscribe payload network process...");
                         const newSubscription = await registration.pushManager.subscribe({
                             userVisibleOnly: true,
                             applicationServerKey: convertedKey
                         });
+                        traceLog.push("16. Cryptographic device handshake achieved successfully.");
 
-                        await client
+                        const { error: insErr } = await client
                             .from('push_subscriptions')
                             .insert({
                                 user_id: userSession.user.id,
                                 subscription_json: newSubscription
                             });
 
+                        if(insErr) {
+                            traceLog.push(`❌ Supabase Sync Failure: ${insErr.message}`);
+                            alert(traceLog.join("\n"));
+                            return;
+                        }
+                        traceLog.push("17. Handshake records written to core cloud architecture.");
+
                         this.checkNotificationStatus();
-                        triggerAlert("Alerts Activated", "This device is now linked to the atelier core push notification system.", "success");
+                        alert(traceLog.join("\n") + "\n✅ Complete mobile registration pipe completely operational!");
                     }
                 } catch (err) {
-                    console.error('Failed to register subscription:', err);
-                    triggerAlert("Link Failure", "Could not complete secure background handshake: " + err.message, "warning");
+                    traceLog.push(`\n💥 FATAL CRASH INTERCEPTED: ${err.name} - ${err.message}`);
+                    if(err.stack) traceLog.push(`Stack: ${err.stack.toString().substring(0, 300)}`);
+                    alert(traceLog.join("\n"));
                 }
             },
 
@@ -614,11 +646,15 @@
     document.addEventListener('DOMContentLoaded', () => App.init());
 
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/sw.js')
-        .then(reg => console.log('SW registered successfully scope:', reg.scope))
-        .catch(err => console.error('SW failed registration handling:', err));
+      window.addEventListener('load', () => {
+         navigator.serviceWorker.register('/sw.js')
+           .then(reg => {
+               console.log('SW successfully activated scope:', reg.scope);
+               reg.update(); 
+           })
+           .catch(err => alert('🔴 CRITICAL SW REGISTRATION SCRIPT REJECTION:\n' + err.message));
+      });
     }
     </script>
 </body>
 </html>
-
