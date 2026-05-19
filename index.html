@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -330,14 +331,15 @@
         </div>
     </section>
 
-    <nav class="category-ribbon" id="catRibbon">
-        <div class="cat-item active" onclick="ELOR.setCategory('All', this)">All</div>
-        <div class="cat-item" onclick="ELOR.setCategory('Agbada', this)">Agbada</div>
-        <div class="cat-item" onclick="ELOR.setCategory('Senator', this)">Senator</div>
-        <div class="cat-item" onclick="ELOR.setCategory('Kaftan', this)">Kaftan</div>
-        <div class="cat-item" onclick="ELOR.setCategory('Atiku', this)">Atiku</div>
-        <div class="cat-item" onclick="ELOR.setCategory('Accessories', this)">Accessories</div>
-    </nav>
+<nav class="category-ribbon" id="catRibbon">
+    <div class="cat-item active" onclick="ELOR.setCategory('All', this)">All</div>
+    <div class="cat-item" onclick="ELOR.setCategory('Agbada', this)">Agbada</div>
+    <div class="cat-item" onclick="ELOR.setCategory('Senator', this)">Senator</div>
+    <div class="cat-item" onclick="ELOR.setCategory('Suit', this)">Suit</div>
+    <div class="cat-item" onclick="ELOR.setCategory('Kaftan', this)">Kaftan</div>
+    <div class="cat-item" onclick="ELOR.setCategory('Atiku', this)">Atiku</div>
+    <div class="cat-item" onclick="ELOR.setCategory('Accessories', this)">Accessories</div>
+</nav>
 
     <section class="hero">
         <h1 id="heroTitle">The Collection</h1>
@@ -527,10 +529,10 @@
                     msgEl.innerText = notif.content;
                     
                     if (notif.type === 'product') {
-    iconEl.src = notif.image_url || 'elor.png';
-} else {
-    iconEl.src = 'elor.png';
-}
+                        iconEl.src = 'logo.png';
+                    } else {
+                        iconEl.src = 'elor.png';
+                    }
 
                     toast.onclick = () => {
                         toast.classList.remove('show');
