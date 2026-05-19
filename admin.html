@@ -1,12 +1,14 @@
-<!DOCTYPE html>
+
+        <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ELOR | panel Admin</title>
+    <title>ELOR | Admin Panel</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600&family=Playfair+Display:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Load Supabase Async for performance -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <style>
@@ -40,6 +42,26 @@
             font-family: var(--font-sans);
             transition: 0.3s;
             line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* --- AUTHENTICATION OVERLAY --- */
+        .auth-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--bg-main); z-index: 9999;
+            display: flex; justify-content: center; align-items: center;
+            flex-direction: column; padding: 20px;
+        }
+        .auth-box {
+            background: var(--bg-surface); padding: 40px 30px; border-radius: 16px;
+            border: 1px solid var(--border-color); width: 100%; max-width: 400px;
+            text-align: center; box-shadow: 0 15px 35px rgba(0,0,0,0.4);
+        }
+        .auth-box .brand { margin-bottom: 10px; }
+        .auth-box p { color: var(--text-muted); font-size: 0.9rem; margin-bottom: 25px; }
+        .auth-box input {
+            text-align: center; font-size: 1.2rem; letter-spacing: 3px; 
+            margin-bottom: 20px; padding: 15px; border-radius: 8px;
         }
 
         /* --- LAYOUT (MOBILE FIRST) --- */
@@ -143,11 +165,35 @@
         
         .data-table td::before { content: attr(data-label); font-weight: 600; color: var(--gold); }
 
-        .status-pill { padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; text-transform: capitalize; }
-        .status-paid { background: rgba(46, 213, 115, 0.15); color: var(--success); }
-        .status-pending { background: rgba(197, 160, 89, 0.15); color: var(--gold); }
-
         .product-thumbnail { width: 45px; height: 45px; object-fit: cover; border-radius: 6px; border: 1px solid var(--border-color); background-color: var(--bg-main); }
+
+        /* --- ENHANCED STATUS DROPDOWN --- */
+        .status-select {
+            background: rgba(197, 160, 89, 0.05);
+            color: var(--gold);
+            border: 1px solid rgba(197, 160, 89, 0.3);
+            padding: 8px 30px 8px 12px;
+            border-radius: 8px;
+            font-family: var(--font-sans);
+            font-size: 0.8rem;
+            font-weight: 600;
+            outline: none;
+            cursor: pointer;
+            text-transform: capitalize;
+            appearance: none;
+            -webkit-appearance: none;
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23C5A059' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right 10px center;
+            background-size: 14px;
+            transition: all 0.2s ease;
+            max-width: 160px;
+        }
+        .status-select:focus, .status-select:hover {
+            border-color: var(--gold);
+            background-color: rgba(197, 160, 89, 0.1);
+            box-shadow: 0 0 10px rgba(197, 160, 89, 0.15);
+        }
 
         /* --- FORMS --- */
         .form-grid {
@@ -159,17 +205,20 @@
         input, select, textarea {
             width: 100%; background: var(--bg-main); border: 1px solid var(--border-color);
             color: var(--text-main); padding: 12px; border-radius: 6px; font-family: var(--font-sans); outline: none;
+            transition: border-color 0.3s;
         }
+        input:focus, select:focus, textarea:focus { border-color: var(--gold); }
 
         .btn {
             background: var(--gold); color: #000; border: none; padding: 12px 24px;
             font-weight: 600; cursor: pointer; border-radius: 6px; transition: 0.3s;
             text-transform: uppercase; font-size: 0.8rem; letter-spacing: 1px; display: inline-flex; align-items: center; justify-content: center; gap: 8px;
         }
+        .btn:hover { box-shadow: 0 4px 15px rgba(197, 160, 89, 0.3); transform: translateY(-1px); }
         .btn-outline { background: transparent; border: 1px solid var(--gold); color: var(--gold); }
         .btn-danger { background: transparent; border: 1px solid var(--danger); color: var(--danger); }
         .btn-info { background: transparent; border: 1px solid var(--info); color: var(--info); }
-        .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+        .btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; box-shadow: none; }
 
         .action-group { display: flex; gap: 8px; }
 
@@ -193,7 +242,8 @@
         .view-section.active { display: block; animation: fadeIn 0.4s ease; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        .img-preview-box { border: 2px dashed var(--border-color); padding: 20px; text-align: center; border-radius: 8px; cursor: pointer; position: relative; }
+        .img-preview-box { border: 2px dashed var(--border-color); padding: 20px; text-align: center; border-radius: 8px; cursor: pointer; position: relative; transition: 0.3s; }
+        .img-preview-box:hover { border-color: var(--gold); background: rgba(197, 160, 89, 0.05); }
         .img-preview-box img { max-width: 100%; height: 150px; object-fit: contain; margin-top: 10px; display: none; }
 
         /* --- DESKTOP ENHANCEMENTS --- */
@@ -210,30 +260,20 @@
             .form-grid { grid-template-columns: 1fr 1fr; }
             .form-group.full { grid-column: span 2; }
         }
-                /* --- STATUS DROPDOWN ENHANCEMENTS --- */
-        .status-select {
-            background: var(--bg-surface);
-            color: var(--gold);
-            border: 1px solid var(--border-color);
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-family: var(--font-sans);
-            font-size: 0.75rem;
-            font-weight: 600;
-            outline: none;
-            cursor: pointer;
-            text-transform: capitalize;
-            appearance: none; /* removes default arrow for cleaner look on mobile */
-            -webkit-appearance: none;
-        }
-        .status-select:focus {
-            border-color: var(--gold);
-            box-shadow: 0 0 5px rgba(197, 160, 89, 0.3);
-        }
-        
     </style>
 </head>
 <body>
+
+    <!-- AUTHENTICATION OVERLAY -->
+    <div id="authOverlay" class="auth-overlay">
+        <div class="auth-box">
+            <h2 class="brand">ELOR</h2>
+            <p>Admin Authorization</p>
+            <input type="password" id="adminPassword" placeholder="••••••••" onkeypress="if(event.key === 'Enter') unlockAdmin()">
+            <button class="btn full" onclick="unlockAdmin()"><i class="fa fa-lock-open"></i> Unlock Panel</button>
+            <p id="authError" style="color:var(--danger); display:none; font-size:0.8rem; margin-top:15px; font-weight: 600;">Incorrect Credentials</p>
+        </div>
+    </div>
 
     <div class="app-container">
         <aside class="sidebar">
@@ -254,6 +294,9 @@
             </ul>
             <div class="nav-item" onclick="toggleTheme()" style="margin-top: auto;">
                 <i class="fa fa-adjust"></i> <span id="themeText">Dark Mode</span>
+            </div>
+            <div class="nav-item" onclick="lockAdmin()" style="margin-top: 10px; color: var(--danger);">
+                <i class="fa fa-lock"></i> <span>Lock Panel</span>
             </div>
         </aside>
 
@@ -280,7 +323,7 @@
             <section id="orders-view" class="view-section active">
                 <div class="header-row">
                     <h2>Orders & Dossiers</h2>
-                    <button class="btn btn-outline" onclick="fetchOrders()"><i class="fa fa-sync"></i></button>
+                    <button class="btn btn-outline" onclick="fetchOrders()"><i class="fa fa-sync"></i> Refresh</button>
                 </div>
                 <table class="data-table">
                     <thead>
@@ -293,7 +336,7 @@
             <section id="products-view" class="view-section">
                 <div class="header-row">
                     <h2>The Collection</h2>
-                    <button class="btn btn-outline" onclick="fetchProducts()"><i class="fa fa-sync"></i></button>
+                    <button class="btn btn-outline" onclick="fetchProducts()"><i class="fa fa-sync"></i> Refresh</button>
                 </div>
                 <table class="data-table">
                     <thead>
@@ -315,25 +358,26 @@
                     </div>
                     <div class="form-group">
                         <label>Category</label>
+                        <!-- Updated Options to match frontend requirements -->
                         <select id="p_category" required>
-    <option value="General">General (All Only)</option>
-    <option value="Accessories">Accessories</option>
-    <option value="Isi Agu">Isi Agu</option>
-    <option value="Agbada">Agbada</option>
-    <option value="Kaftan">Kaftan</option>
-    <option value="Senator Wear">Senator Wear</option>
-    <option value="Atiku">Atiku</option>
-</select>
-
+                            <option value="General">General (All Only)</option>
+                            <option value="Accessories">Accessories</option>
+                            <option value="Isi Agu">Isi Agu</option>
+                            <option value="Agbada">Agbada</option>
+                            <option value="Kaftan">Kaftan</option>
+                            <option value="Senator">Senator</option>
+                            <option value="Suit">Suit</option>
+                            <option value="Atiku">Atiku</option>
+                        </select>
                     </div>
-                  <div class="form-group">
-    <label>Style Group</label>
-    <select id="p_style" required>
-        <option value="All Ages">Both (Young & Elder)</option>
-        <option value="Young Mogul">Young Mogul (Modern Fit)</option>
-        <option value="Elder Statesman">Elder Statesman (Classic Fit)</option>
-    </select>
-</div>
+                    <div class="form-group">
+                        <label>Style Group</label>
+                        <select id="p_style" required>
+                            <option value="All Ages">Both (Young & Elder)</option>
+                            <option value="Young Mogul">Young Mogul (Modern Fit)</option>
+                            <option value="Elder Statesman">Elder Statesman (Classic Fit)</option>
+                        </select>
+                    </div>
 
                     <div class="form-group full">
                         <label>Price (₦)</label>
@@ -343,9 +387,9 @@
                         <label>Product Image</label>
                         <div class="img-preview-box" onclick="document.getElementById('p_image').click()">
                             <input type="file" id="p_image" accept="image/*" hidden onchange="processImage(this)">
-                            <i class="fa fa-upload"></i>
+                            <i class="fa fa-upload" style="font-size: 2rem; color: var(--gold); margin-bottom: 10px;"></i>
                             <p id="imgStatus">Tap to upload</p>
-                            <img id="imgPreview" src="">
+                            <img id="imgPreview" src="" loading="lazy">
                         </div>
                     </div>
                     <button type="submit" class="btn full" id="submitBtn"><i class="fa fa-save"></i> Publish Product</button>
@@ -354,6 +398,7 @@
         </main>
     </div>
 
+    <!-- DOSSIER MODAL -->
     <div class="modal-overlay" id="orderModal">
         <div class="modal-content">
             <h3 style="color:var(--gold); font-family:var(--font-serif)">Tailor's Dossier</h3>
@@ -366,18 +411,46 @@
     </div>
 
     <script>
+        // --- AUTHENTICATION LOGIC ---
+        function checkAuth() {
+            if(localStorage.getItem('elor_admin_auth') === 'unlocked') {
+                document.getElementById('authOverlay').style.display = 'none';
+            }
+            // We initiate dashboard regardless so data loads in background instantly
+            initDashboard();
+        }
+
+        function unlockAdmin() {
+            const pass = document.getElementById('adminPassword').value;
+            if(pass === 'sylva_elor') {
+                localStorage.setItem('elor_admin_auth', 'unlocked');
+                document.getElementById('authOverlay').style.display = 'none';
+                document.getElementById('adminPassword').value = '';
+            } else {
+                const err = document.getElementById('authError');
+                err.style.display = 'block';
+                setTimeout(() => err.style.display = 'none', 3000);
+            }
+        }
+
+        function lockAdmin() {
+            localStorage.removeItem('elor_admin_auth');
+            document.getElementById('authOverlay').style.display = 'flex';
+        }
+
+        // --- SUPABASE CONFIG ---
         const SUPABASE_URL = 'https://lxtoxjhcdtzuxyirzxpc.supabase.co';
-        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx4dG94amhjZHR6dXh5aXJ6eHBjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwMDU4OTAsImV4cCI6MjA5MTU4MTg5MH0.F5lDJVYUF4aEq8DwkafoWy56I_K6ccpkXiarBJk1LAo'; // PASTE YOUR FULL KEY HERE
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx4dG94amhjZHR6dXh5aXJ6eHBjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwMDU4OTAsImV4cCI6MjA5MTU4MTg5MH0.F5lDJVYUF4aEq8DwkafoWy56I_K6ccpkXiarBJk1LAo'; 
         const client = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         let allOrders = [];
         let allProducts = [];
         let compressedBlob = null;
-        let editingProductId = null; // Tracks if we are inserting or updating
+        let editingProductId = null;
 
         // --- DASHBOARD INIT ---
         async function initDashboard() {
-            // Load everything in parallel for speed
+            // Promise.all fetches everything concurrently for max speed
             await Promise.all([
                 fetchOrders(),
                 fetchProducts(),
@@ -423,13 +496,12 @@
             } catch(e) { console.error("Error fetching chats", e); }
         }
 
-             // --- FETCH ORDERS (BULLETPROOF MERGE W/ IMAGES & STATUS UPDATES) ---
+        // --- FETCH ORDERS ---
         async function fetchOrders() {
             const tbody = document.getElementById('ordersTableBody');
-            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Syncing panel...</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding: 40px 0;"><i class="fa fa-spinner fa-spin" style="color:var(--gold); font-size:24px;"></i><br><br>Syncing orders...</td></tr>';
 
             try {
-                // 1. Get Orders and embedded Products (Added image_url)
                 const { data: orders, error: oError } = await client
                     .from('orders')
                     .select(`id, reference, status, amount, created_at, user_id, products(name, image_url)`)
@@ -437,17 +509,13 @@
 
                 if(oError) throw oError;
 
-                // 2. Extract unique User IDs
                 const userIds = [...new Set(orders.map(o => o.user_id).filter(Boolean))];
-
-                // 3. Fetch matching Profiles
                 let profiles = [];
                 if(userIds.length > 0) {
                     const { data: pData } = await client.from('profiles').select('*').in('id', userIds);
                     profiles = pData || [];
                 }
 
-                // 4. Merge Data securely (Extracting image_url)
                 allOrders = orders.map(order => {
                     const productData = order.products ? (Array.isArray(order.products) ? order.products[0] : order.products) : null;
                     return {
@@ -458,15 +526,14 @@
                     };
                 });
 
-                // Render with Image and Select Dropdown
                 tbody.innerHTML = allOrders.map(o => `
                     <tr>
                         <td data-label="Ref">#${o.reference ? o.reference.slice(-5) : 'N/A'}</td>
-                        <td data-label="Client">${o.profile?.full_name || o.profile?.id?.slice(0,6) || 'Guest'}</td>
+                        <td data-label="Client" style="font-weight: 500;">${o.profile?.full_name || o.profile?.id?.slice(0,6) || 'Guest'}</td>
                         <td data-label="Product">
-                            <div style="display: flex; align-items: center; gap: 10px;">
-                                ${o.productImage ? `<img src="${o.productImage}" class="product-thumbnail">` : `<div class="product-thumbnail" style="display:flex;align-items:center;justify-content:center"><i class="fa fa-image"></i></div>`}
-                                <span>${o.productName}</span>
+                            <div style="display: flex; align-items: center; gap: 12px;">
+                                ${o.productImage ? `<img src="${o.productImage}" loading="lazy" class="product-thumbnail">` : `<div class="product-thumbnail" style="display:flex;align-items:center;justify-content:center;color:var(--text-muted);"><i class="fa fa-image"></i></div>`}
+                                <span style="font-size: 0.85rem;">${o.productName}</span>
                             </div>
                         </td>
                         <td data-label="Status">
@@ -478,16 +545,17 @@
                                 <option value="Delivered" ${o.status === 'Delivered' ? 'selected' : ''}>Delivered</option>
                             </select>
                         </td>
-                        <td data-label="Action"><button class="btn btn-outline" style="padding:5px 10px; font-size:10px" onclick="openDossier('${o.id}')">Dossier</button></td>
+                        <td data-label="Action"><button class="btn btn-outline" style="padding:6px 12px; font-size:11px" onclick="openDossier('${o.id}')">Dossier</button></td>
                     </tr>
                 `).join('');
 
             } catch (err) {
                 console.error("Fetch Orders Error:", err);
-                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:var(--danger)">Failed to load orders. Check console.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:var(--danger); padding:20px;">Failed to load orders. Check console.</td></tr>';
             }
         }
-                // --- UPDATE ORDER STATUS ON THE FLY ---
+        
+        // --- UPDATE ORDER STATUS ON THE FLY ---
         async function updateOrderStatus(orderId, newStatus) {
             try {
                 const { error } = await client
@@ -496,23 +564,19 @@
                     .eq('id', orderId);
 
                 if (error) throw error;
-                
-                // Optional: Provide quick visual feedback without annoying alerts
                 console.log(`Order updated to: ${newStatus}`);
                 
             } catch (err) {
                 console.error("Failed to update status:", err);
                 alert("Failed to update status. Reverting...");
-                fetchOrders(); // Refresh table to revert dropdown if database update fails
+                fetchOrders(); 
             }
         }
 
-                function openDossier(orderId) {
+        function openDossier(orderId) {
             const o = allOrders.find(x => x.id === orderId);
             if(!o) return;
             const m = o.profile?.measurements || {};
-            
-            // Extract the client's name, defaulting to 'Guest' if not found
             const clientName = o.profile?.full_name || 'Guest';
             
             const ticket = `ELOR PRODUCTION TICKET
@@ -539,7 +603,7 @@ Shoulder: ${m.shoulder || '--'}
         // --- FETCH PRODUCTS ---
         async function fetchProducts() {
             const tbody = document.getElementById('productsTableBody');
-            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Loading Collection...</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding: 40px 0;"><i class="fa fa-spinner fa-spin" style="color:var(--gold); font-size:24px;"></i><br><br>Loading Collection...</td></tr>';
 
             const { data, error } = await client.from('products').select('*').order('created_at', { ascending: false });
             if(error) return console.error(error);
@@ -548,25 +612,25 @@ Shoulder: ${m.shoulder || '--'}
             tbody.innerHTML = data.map(p => `
                 <tr>
                     <td data-label="Image">
-                        ${p.image_url ? `<img src="${p.image_url}" class="product-thumbnail">` : `<div class="product-thumbnail" style="display:flex;align-items:center;justify-content:center"><i class="fa fa-image"></i></div>`}
+                        ${p.image_url ? `<img src="${p.image_url}" loading="lazy" class="product-thumbnail">` : `<div class="product-thumbnail" style="display:flex;align-items:center;justify-content:center;color:var(--text-muted);"><i class="fa fa-image"></i></div>`}
                     </td>
                     <td data-label="Item" style="font-weight:600;">${p.name}</td>
                     <td data-label="Category & Style">
-                        ${p.category} <br>
+                        <span style="color:var(--gold)">${p.category}</span> <br>
                         <small style="color:var(--text-muted)">${p.style_group}</small>
                     </td>
                     <td data-label="Price">₦${p.final_price.toLocaleString()}</td>
                     <td data-label="Actions">
                         <div class="action-group">
-                            <button class="btn btn-info" style="padding:6px 10px;" onclick="editProduct('${p.id}')"><i class="fa fa-pen"></i></button>
-                            <button class="btn btn-danger" style="padding:6px 10px;" onclick="deleteProduct('${p.id}')"><i class="fa fa-trash"></i></button>
+                            <button class="btn btn-info" style="padding:6px 12px;" onclick="editProduct('${p.id}')"><i class="fa fa-pen"></i></button>
+                            <button class="btn btn-danger" style="padding:6px 12px;" onclick="deleteProduct('${p.id}')"><i class="fa fa-trash"></i></button>
                         </div>
                     </td>
                 </tr>
             `).join('');
         }
 
-        // --- PRODUCT MANAGEMENT (EDIT / ADD / DELETE) ---
+        // --- PRODUCT MANAGEMENT ---
         function prepareAddProduct() {
             document.getElementById('addProductForm').reset();
             document.getElementById('formTitle').innerText = "New Masterpiece";
@@ -575,7 +639,6 @@ Shoulder: ${m.shoulder || '--'}
             document.getElementById('imgPreview').style.display = 'none';
             document.getElementById('imgStatus').innerText = "Tap to upload";
             
-            // Remove required tag from image if we were editing
             document.getElementById('p_image').required = true; 
             
             editingProductId = null;
@@ -588,7 +651,12 @@ Shoulder: ${m.shoulder || '--'}
             if(!p) return;
 
             document.getElementById('p_name').value = p.name;
-            document.getElementById('p_category').value = p.category;
+            
+            // Handle Category Fallbacks dynamically
+            let catSelect = document.getElementById('p_category');
+            if (p.category === 'Senator Wear') catSelect.value = 'Senator';
+            else catSelect.value = p.category;
+
             document.getElementById('p_style').value = p.style_group || 'Young Mogul';
             document.getElementById('p_price').value = p.final_price;
             
@@ -596,7 +664,7 @@ Shoulder: ${m.shoulder || '--'}
                 document.getElementById('imgPreview').src = p.image_url;
                 document.getElementById('imgPreview').style.display = 'block';
                 document.getElementById('imgStatus').innerText = "Keep current image or tap to replace";
-                document.getElementById('p_image').required = false; // Image not required when editing
+                document.getElementById('p_image').required = false;
             }
 
             document.getElementById('formTitle').innerText = "Edit Masterpiece";
@@ -637,62 +705,59 @@ Shoulder: ${m.shoulder || '--'}
         }
 
         async function handleUpload(e) {
-    e.preventDefault();
-    const btn = document.getElementById('submitBtn');
-    
-    // Prevent double-clicks
-    if (btn.disabled) return; 
+            e.preventDefault();
+            const btn = document.getElementById('submitBtn');
+            
+            if (btn.disabled) return; 
 
-    btn.disabled = true; 
-    btn.innerText = "Saving...";
+            btn.disabled = true; 
+            btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Saving...';
 
-    try {
-        let url = undefined;
+            try {
+                let url = undefined;
 
-        // 1. Upload new image if provided
-        if(compressedBlob) {
-            btn.innerText = "Uploading Image...";
-            const path = `products/${Date.now()}.jpg`;
-            const { data: sData, error: sError } = await client.storage.from('elor-assets').upload(path, compressedBlob);
-            if(sError) throw sError;
-            url = `${SUPABASE_URL}/storage/v1/object/public/elor-assets/${path}`;
+                if(compressedBlob) {
+                    btn.innerHTML = '<i class="fa fa-cloud-upload-alt"></i> Uploading Image...';
+                    const path = `products/${Date.now()}.jpg`;
+                    const { data: sData, error: sError } = await client.storage.from('elor-assets').upload(path, compressedBlob);
+                    if(sError) throw sError;
+                    url = `${SUPABASE_URL}/storage/v1/object/public/elor-assets/${path}`;
+                }
+
+                btn.innerHTML = '<i class="fa fa-database"></i> Updating Database...';
+                const payload = {
+                    name: document.getElementById('p_name').value,
+                    category: document.getElementById('p_category').value,
+                    style_group: document.getElementById('p_style').value,
+                    original_price: parseFloat(document.getElementById('p_price').value),
+                    final_price: parseFloat(document.getElementById('p_price').value),
+                };
+                
+                if(url) payload.image_url = url;
+
+                if(editingProductId) {
+                    const { error } = await client.from('products').update(payload).eq('id', editingProductId);
+                    if(error) throw error;
+                } else {
+                    const { error } = await client.from('products').insert([payload]);
+                    if(error) throw error;
+                }
+
+                await fetchProducts(); 
+                prepareAddProduct();   
+                switchView('products-view'); 
+                
+                // Use a non-blocking alert/toast alternative if preferred, but alert works fine:
+                setTimeout(() => alert("Masterpiece saved successfully!"), 300);
+
+            } catch (err) {
+                console.error("Upload failed:", err);
+                alert("Error: " + err.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = editingProductId ? '<i class="fa fa-sync"></i> Update Product' : '<i class="fa fa-save"></i> Publish Product';
+            }
         }
-
-        btn.innerText = "Updating Database...";
-        const payload = {
-            name: document.getElementById('p_name').value,
-            category: document.getElementById('p_category').value,
-            style_group: document.getElementById('p_style').value,
-            original_price: parseFloat(document.getElementById('p_price').value),
-            final_price: parseFloat(document.getElementById('p_price').value),
-        };
-        
-        if(url) payload.image_url = url;
-
-        if(editingProductId) {
-            const { error } = await client.from('products').update(payload).eq('id', editingProductId);
-            if(error) throw error;
-        } else {
-            const { error } = await client.from('products').insert([payload]);
-            if(error) throw error;
-        }
-
-        // --- THE CRITICAL FIXES ---
-        await fetchProducts(); // Await the refresh so the data is there
-        prepareAddProduct();   // This resets the form and compressedBlob
-        switchView('products-view'); 
-        alert("Masterpiece saved successfully!");
-
-    } catch (err) {
-        console.error("Upload failed:", err);
-        alert("Error: " + err.message);
-    } finally {
-        // Always re-enable button regardless of success/fail
-        btn.disabled = false;
-        btn.innerHTML = editingProductId ? '<i class="fa fa-sync"></i> Update Product' : '<i class="fa fa-save"></i> Publish Product';
-    }
-}
-
 
         async function deleteProduct(id) {
             if(confirm("Are you sure you want to permanently remove this piece?")) {
@@ -705,8 +770,8 @@ Shoulder: ${m.shoulder || '--'}
         function closeModal() { document.getElementById('orderModal').classList.remove('active'); }
         function copyDossier() { navigator.clipboard.writeText(document.getElementById('dossierText').innerText); alert("Ticket Copied!"); }
 
-        // Start Application
-        initDashboard();
+        // Start Application Security Check
+        checkAuth();
     </script>
 </body>
 </html>
